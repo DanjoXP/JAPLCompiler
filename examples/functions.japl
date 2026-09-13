@@ -1,0 +1,20 @@
+Begin Function greet(name)
+
+    print("Greetings, " + name + "!")
+
+End Function
+
+Begin Function calculateArea(width, height)
+
+    area = width * height
+    return area
+
+End Function
+
+Begin Function main()
+
+    greet("Alex")
+    totalArea = calculateArea(10, 20)
+    print("Calculated Area = " + totalArea)
+
+End Function

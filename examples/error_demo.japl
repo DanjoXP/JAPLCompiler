@@ -1,0 +1,9 @@
+# Demonstrates friendly JAPL compiler error messages.
+# Notice the missing 'end if' before 'End Function'.
+Begin Function main()
+
+    age = 15
+
+    if age < 18
+        print("Underage")
+End Function
