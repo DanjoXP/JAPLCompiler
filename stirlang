@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+if [ "$1" = "-update" ] || [ "$1" = "--update" ] || [ "$1" = "update" ]; then
+    bash "$SCRIPT_DIR/update.sh"
+    exit $?
+fi
+
+java -jar "$SCRIPT_DIR/stirlang.jar" "$@"

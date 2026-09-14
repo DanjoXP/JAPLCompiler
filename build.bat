@@ -2,7 +2,7 @@
 setlocal enabledelayedexpansion
 
 echo =========================================================
-echo             Building and Installing JAPL Compiler
+echo           Building and Installing Stirlang Compiler
 echo =========================================================
 
 cd /d "%~dp0"
@@ -19,23 +19,23 @@ if %ERRORLEVEL% neq 0 (
     echo.
     echo [ERROR] Java compilation failed. Make sure JDK 17+ is installed.
     if exist sources.txt del sources.txt
-    pause
+    if not "%1"=="--no-pause" pause
     exit /b %ERRORLEVEL%
 )
 if exist sources.txt del sources.txt
 
 echo.
 echo Running Test Suite...
-java -cp bin com.japl.test.JAPLTestRunner
+java -cp bin com.stirlang.test.StirlangTestRunner
 if %ERRORLEVEL% neq 0 (
     echo.
     echo [ERROR] Tests failed.
-    pause
+    if not "%1"=="--no-pause" pause
     exit /b %ERRORLEVEL%
 )
 
 echo.
-echo Packaging japl.jar...
+echo Packaging stirlang.jar...
 
 set JAR_CMD=jar
 where jar >nul 2>&1
@@ -49,26 +49,27 @@ if %ERRORLEVEL% neq 0 (
     )
 )
 
-%JAR_CMD% --create --file japl.jar --main-class com.japl.Main -C bin .
+%JAR_CMD% --create --file stirlang.jar --main-class com.stirlang.Main -C bin .
 if %ERRORLEVEL% neq 0 (
     echo.
     echo [ERROR] Failed to create JAR file.
-    pause
+    if not "%1"=="--no-pause" pause
     exit /b %ERRORLEVEL%
 )
 
 echo.
-echo Installing JAPL to your User PATH...
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$d = '%~dp0'.TrimEnd('\'); $p = [Environment]::GetEnvironmentVariable('Path', 'User'); if (-not $p -or ($p -split ';' -notcontains $d)) { $newPath = if ($p) { $p.TrimEnd(';') + ';' + $d } else { $d }; [Environment]::SetEnvironmentVariable('Path', $newPath, 'User'); Write-Host '  [SUCCESS] Added JAPL to your User PATH!' -ForegroundColor Green } else { Write-Host '  [INFO] JAPL is already in your User PATH.' -ForegroundColor Gray }"
+echo Installing Stirlang to your User PATH...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$d = '%~dp0'.TrimEnd('\'); $p = [Environment]::GetEnvironmentVariable('Path', 'User'); if (-not $p -or ($p -split ';' -notcontains $d)) { $newPath = if ($p) { $p.TrimEnd(';') + ';' + $d } else { $d }; [Environment]::SetEnvironmentVariable('Path', $newPath, 'User'); Write-Host '  [SUCCESS] Added Stirlang to your User PATH!' -ForegroundColor Green } else { Write-Host '  [INFO] Stirlang is already in your User PATH.' -ForegroundColor Gray }"
 
 echo.
 echo =========================================================
-echo  [SUCCESS] JAPL is ready to use!
+echo  [SUCCESS] Stirlang is ready to use!
 echo.
 echo  You can now open any Command Prompt or Terminal and run:
-echo    japl -v
-echo    japl program.japl
-echo    japl examples\hello.japl
+echo    stirlang -v
+echo    stirlang -update
+echo    stirlang program.stirl
+echo    stirlang examples\hello.stirl
 echo =========================================================
 echo.
-pause
+if not "%1"=="--no-pause" pause

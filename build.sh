@@ -2,7 +2,7 @@
 set -e
 
 echo "========================================================="
-echo "            Building JAPL Compiler                       "
+echo "          Building and Installing Stirlang               "
 echo "========================================================="
 
 cd "$(dirname "$0")"
@@ -13,13 +13,13 @@ echo "Compiling Java source files..."
 javac -encoding UTF-8 -d bin $(find src -name "*.java")
 
 echo "Running Test Suite..."
-java -cp bin com.japl.test.JAPLTestRunner
+java -cp bin com.stirlang.test.StirlangTestRunner
 
-echo "Packaging japl.jar..."
-jar --create --file japl.jar --main-class com.japl.Main -C bin .
+echo "Packaging stirlang.jar..."
+jar --create --file stirlang.jar --main-class com.stirlang.Main -C bin .
 
-chmod +x japl 2>/dev/null || true
+chmod +x stirlang stirl update.sh uninstall.sh 2>/dev/null || true
 echo "========================================================="
-echo "[SUCCESS] Successfully built japl.jar!"
-echo "Run: ./japl examples/hello.japl"
+echo "[SUCCESS] Successfully built stirlang.jar!"
+echo "Run: ./stirlang examples/hello.stirl"
 echo "========================================================="

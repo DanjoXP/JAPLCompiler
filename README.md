@@ -1,8 +1,8 @@
-# JAPL Programming Language & Compiler
+# Stirlang Programming Language & Compiler
 
-**JAPL** (*Java-targeted Pseudocode-inspired Language*) is an educational programming language compiler written in pure, modern Java with **zero third-party dependencies**.
+**Stirlang** is an educational, readable programming language compiler written in pure, modern Java with **zero third-party dependencies**.
 
-JAPL source files use the `.japl` extension. The compiler translates `.japl` source code through a clean, multi-stage compiler pipeline into readable Java code, compiles the generated code to JVM bytecode (`.class`), and runs it directly on the JVM.
+Stirlang source files use the **`.stirl`** extension. The compiler translates `.stirl` source code through a clean, multi-stage compiler pipeline into readable Java code, compiles the generated code to JVM bytecode (`.class`), and runs it directly on the JVM.
 
 ---
 
@@ -11,54 +11,54 @@ JAPL source files use the `.japl` extension. The compiler translates `.japl` sou
 The compiler is organized into clear, decoupled stages designed for educational clarity and easy extensibility:
 
 ```
-                  +--------------------------------+
-                  |       JAPL Source (.japl)      |
-                  +--------------------------------+
+                +------------------------------------+
+                |       Stirlang Source (.stirl)     |
+                +------------------------------------+
                                   |
                                   v
-                  +--------------------------------+
-                  |         Lexer (Scanner)        |
-                  |  Tokenizes text into Tokens    |
-                  +--------------------------------+
+                +------------------------------------+
+                |          Lexer (Scanner)           |
+                |     Tokenizes text into Tokens     |
+                +------------------------------------+
                                   |
                                   v
-                  +--------------------------------+
-                  |      Parser (Recursive)        |
-                  |  Builds Abstract Syntax Tree   |
-                  +--------------------------------+
+                +------------------------------------+
+                |         Parser (Recursive)         |
+                |    Builds Abstract Syntax Tree     |
+                +------------------------------------+
                                   |
                                   v
-                  +--------------------------------+
-                  |       Semantic Analyzer        |
-                  |  Validates types & scopes      |
-                  +--------------------------------+
+                +------------------------------------+
+                |         Semantic Analyzer          |
+                |    Validates types & scopes        |
+                +------------------------------------+
                                   |
                                   v
-                  +--------------------------------+
-                  |      Java Code Generator       |
-                  |  Emits readable Java source    |
-                  +--------------------------------+
+                +------------------------------------+
+                |        Java Code Generator         |
+                |    Emits readable Java source      |
+                +------------------------------------+
                                   |
                                   v
-                  +--------------------------------+
-                  |      Java Compiler Service     |
-                  | Compiles to JVM Bytecode .class|
-                  +--------------------------------+
+                +------------------------------------+
+                |       Java Compiler Service        |
+                |   Compiles to JVM Bytecode .class  |
+                +------------------------------------+
                                   |
                                   v
-                  +--------------------------------+
-                  |         Program Runner         |
-                  |    Executes bytecode on JVM    |
-                  +--------------------------------+
+                +------------------------------------+
+                |           Program Runner           |
+                |      Executes bytecode on JVM      |
+                +------------------------------------+
 ```
 
 ### Directory Structure
 
 ```text
-JAPLCompiler/
+Stirlang/
 ├── src/
-│   └── com/japl/
-│       ├── Main.java                          # CLI entry point
+│   └── com/stirlang/
+│       ├── Main.java                          # CLI entry point (stirlang / stirl)
 │       ├── common/
 │       │   ├── SourceLocation.java            # Line & Column tracking
 │       │   ├── CompilerException.java         # Visual caret error reporting
@@ -96,44 +96,66 @@ JAPLCompiler/
 │       ├── codegen/
 │       │   └── JavaCodeGenerator.java         # Pretty-printed Java emitter
 │       ├── compiler/
-│       │   └── JAPLCompiler.java              # End-to-end pipeline orchestrator
+│       │   └── StirlangCompiler.java          # End-to-end pipeline orchestrator
 │       ├── runner/
 │       │   ├── JavaCompilerService.java       # Compiles Java via ToolProvider or javac
 │       │   └── ProgramRunner.java             # Runs compiled bytecode
 │       └── test/
-│           ├── JAPLTestRunner.java            # Zero-dependency test framework
+│           ├── StirlangTestRunner.java        # Zero-dependency test framework
 │           ├── LexerTest.java                 # Tokenizer unit tests
 │           ├── ParserTest.java                # Syntax and precedence tests
 │           ├── SemanticAnalyzerTest.java      # Scoping and type tests
 │           └── EndToEndTest.java              # Complete pipeline integration tests
 ├── examples/
-│   ├── hello.japl                             # Simple Hello World program
-│   ├── adult_check.japl                       # If/else branch from specification
-│   ├── math_operations.japl                   # Operator precedence & compound assign
-│   ├── comparisons.japl                       # English-readable operators demonstration
-│   ├── functions.japl                         # Parameter passing & return values
-│   └── error_demo.japl                        # Shows user-friendly error diagnostics
-├── build.ps1                                  # Windows PowerShell build & test script
-├── build.bat                                  # Windows Batch build & test script
-└── README.md                                  # Documentation and language guide
+│   ├── hello.stirl                            # Simple Hello World program
+│   ├── adult_check.stirl                      # If/else branch demonstration
+│   ├── math_operations.stirl                  # Operator precedence & compound assign
+│   ├── comparisons.stirl                      # English-readable operators demonstration
+│   ├── functions.stirl                        # Parameter passing & return values
+│   ├── no_main_demo.stirl                     # Direct function call entry point
+│   └── error_demo.stirl                       # User-friendly error diagnostics
+├── build.bat                                  # Windows CMD one-click build & install
+├── build.ps1                                  # Windows PowerShell build & install
+├── build.sh                                   # Linux / macOS build script
+├── update.bat                                 # Windows CMD GitHub updater
+├── update.ps1                                 # Windows PowerShell GitHub updater
+├── update.sh                                  # Linux / macOS GitHub updater
+├── uninstall.bat                              # One-click Windows uninstaller
+├── uninstall.ps1                              # PowerShell uninstaller
+├── uninstall.sh                               # Linux / macOS uninstaller
+├── stirlang.bat / stirl.bat                   # Windows CMD CLI launchers
+├── stirlang.cmd / stirl.cmd                   # Windows CMD alternative launchers
+├── stirlang.ps1 / stirl.ps1                   # Windows PowerShell launchers
+├── stirlang / stirl                           # Linux / macOS launchers
+├── stirlang.jar                               # Pre-packaged executable JAR
+└── README.md                                  # Complete language documentation
 ```
 
 ---
 
 ## Language Syntax Guide
 
-### 1. Functions
+### 1. Functions & Entry Points
 A function starts with `Begin Function <Name>(<parameters>)` and ends with `End Function`.
-The `main()` function serves as the program entry point.
+
+You **do not need a `main()` method** to run your program! Calling any function at the top level or running statements directly acts as the program entry point:
 
 ```text
-Begin Function main()
-    print("Welcome to JAPL")
+Begin Function GreetPerson(name)
+    print("Hello, " + name)
 End Function
+
+# Access point: Top-level call runs automatically!
+GreetPerson("Danny")
 ```
 
-Functions can accept comma-separated parameters and return values:
+If a program contains functions but **no function is called** and **no `main()` function is defined**, the compiler will report:
+```text
+Stirlang Compiler Error
+Line 1, Column 1: No Access Point. At least one function must be called, or 'Begin Function main()' must be defined.
+```
 
+Standard `Begin Function main()` blocks are also fully supported:
 ```text
 Begin Function calculateArea(width, height)
     area = width * height
@@ -147,7 +169,7 @@ End Function
 ```
 
 ### 2. Variables & Type Inference
-Variables are untyped in JAPL syntax. The compiler automatically infers Java-compatible types from expressions:
+Variables are untyped in Stirlang syntax. The compiler automatically infers Java-compatible types from expressions:
 - **Integer**: e.g. `age = 30` (compiles to `int age = 30;`)
 - **Decimal**: e.g. `rate = 3.14` (compiles to `double rate = 3.14;`)
 - **String**: e.g. `name = "John"` (compiles to `String name = "John";`)
@@ -178,7 +200,7 @@ end if
 ```
 
 ### 5. Operators
-JAPL supports both symbolic and English-readable operator syntax:
+Stirlang supports both symbolic and English-readable operator syntax:
 
 | Operation | Symbolic | Readable Keyword | Notes |
 | :--- | :--- | :--- | :--- |
@@ -221,7 +243,7 @@ Both hash (`#`) and double-slash (`//`) line comments are supported:
 When syntax or semantic errors occur, the compiler prints user-friendly diagnostic messages showing the exact line, column, error description, and a visual pointer `^` to the error location:
 
 ```text
-JAPL Compiler Error
+Stirlang Compiler Error
 Line 9, Column 1: Expected 'end if' before 'End Function'.
 
     End Function
@@ -232,7 +254,7 @@ Line 9, Column 1: Expected 'end if' before 'End Function'.
 
 ## Building and Automatic Installation
 
-Anyone who clones your repository can build and install JAPL in one click:
+Anyone who clones your repository can build and install Stirlang in one click:
 
 ### Windows (One-Click Build & Install)
 Simply double-click **`build.bat`** (or run it in Command Prompt / PowerShell):
@@ -241,18 +263,30 @@ build.bat
 ```
 This will:
 1. Compile all Java sources
-2. Run the 23 unit tests
-3. Package `japl.jar`
-4. **Automatically add JAPL to their Windows User PATH** so they can immediately type `japl` from any Command Prompt or Terminal!
+2. Run all 25 unit tests
+3. Package `stirlang.jar`
+4. **Automatically add Stirlang to their Windows User PATH** so they can immediately type `stirlang` or `stirl` from any Command Prompt or Terminal!
 
 To test the installation:
 ```cmd
-japl -v
+stirlang -v
 ```
 Output:
 ```text
-JAPL Compiler version 1.0.0
+Stirlang Compiler version 1.0.0
 ```
+
+### Updating Stirlang to the Latest Version
+Whenever updates are pushed to GitHub, users can update their compiler with one command:
+```cmd
+stirlang -update
+```
+This automatically:
+1. Connects to the GitHub repository
+2. Fetches and pulls the latest source code
+3. Recompiles and runs the test suite
+4. Packages the new `stirlang.jar`
+5. Confirms with `stirlang -v`
 
 ### Windows (One-Click Uninstall)
 Simply double-click **`uninstall.bat`** (or run it in Command Prompt):
@@ -260,26 +294,20 @@ Simply double-click **`uninstall.bat`** (or run it in Command Prompt):
 uninstall.bat
 ```
 This will:
-1. Automatically remove JAPL from the Windows User `PATH`
-2. Clean up compiled `bin/`, `build/`, and `japl.jar` files
+1. Automatically remove Stirlang from the Windows User `PATH`
+2. Clean up compiled `bin/`, `build/`, and `stirlang.jar` files
 3. Keep the original source code clean and intact
 
 *(You can reinstall at any time by running `build.bat` again)*
 
 ### Linux & macOS
 ```bash
-chmod +x build.sh japl
+chmod +x build.sh stirlang stirl update.sh uninstall.sh
 ./build.sh
 ```
 To run globally on Unix:
 ```bash
-sudo ln -s $(pwd)/japl /usr/local/bin/japl
-```
-
-### Running the Test Suite
-The project contains an embedded, zero-dependency unit test framework:
-```bash
-java -cp bin com.japl.test.JAPLTestRunner
+sudo ln -s $(pwd)/stirlang /usr/local/bin/stirlang
 ```
 
 ---
@@ -288,43 +316,19 @@ java -cp bin com.japl.test.JAPLTestRunner
 
 ### 1. Compile and Run Directly (Default)
 ```bash
-java -jar japl.jar examples/hello.japl
+stirlang examples/hello.stirl
 # Or explicitly:
-java -jar japl.jar run examples/adult_check.japl
+stirlang run examples/adult_check.stirl
 ```
 
 ### 2. Inspect Generated Java Code
 ```bash
-java -jar japl.jar java examples/math_operations.japl
-```
-
-Output:
-```java
-// Generated by JAPL Compiler
-import java.util.Objects;
-
-public class math_operations {
-    public static void main(String[] args) {
-        int a = 10;
-        int b = 5;
-        int c = 2;
-        int result = (a + (b * c));
-        System.out.println(("Result of 10 + 5 * 2 = " + result));
-        int remainder = (17 % 5);
-        System.out.println(("17 % 5 = " + remainder));
-        int score = 100;
-        score += 25;
-        score -= 5;
-        score *= 2;
-        score /= 4;
-        System.out.println(("Final score = " + score));
-    }
-}
+stirlang java examples/math_operations.stirl
 ```
 
 ### 3. Compile to `.java` and `.class` Bytecode
 ```bash
-java -jar japl.jar compile examples/adult_check.japl -o build
+stirlang compile examples/adult_check.stirl -o build
 ```
 Creates:
 - `build/adult_check.java`
