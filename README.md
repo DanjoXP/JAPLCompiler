@@ -228,7 +228,58 @@ if age greaterThan 18 and active equalTo true
 end if
 ```
 
-### 6. Comments
+### 6. Loops (`Start Loop`, `End Loop`, `Break Loop`, `Continue Loop`)
+
+Stirlang provides clean and expressive loop constructs:
+
+#### 1. Infinite Loop
+```text
+Start Loop
+    // Loop forever until a Break Loop is encountered
+    Break Loop
+End Loop
+```
+Compiles to Java:
+```java
+while (true) {
+    break;
+}
+```
+
+#### 2. Counted Loop with Exposed Counter
+```text
+Start Loop(10) as i
+    print(i)
+End Loop
+```
+Runs 10 times, counting from `0` to `9`. The counter variable `i` is scoped exclusively to the loop body.
+Compiles to Java:
+```java
+for (int i = 0; i < 10; i++) {
+    System.out.println(i);
+}
+```
+
+#### 3. Counted Loop without Counter
+```text
+Start Loop(5)
+    print("Repeating action")
+End Loop
+```
+Runs 5 times. Unique internal counters (`__loop0`, `__loop1`) are generated automatically so nested loops do not collide.
+Compiles to Java:
+```java
+for (int __loop0 = 0; __loop0 < 5; __loop0++) {
+    System.out.println("Repeating action");
+}
+```
+
+#### 4. `Break Loop` and `Continue Loop`
+- `Break Loop` immediately terminates the nearest enclosing loop (`break;`).
+- `Continue Loop` immediately skips to the next iteration of the nearest enclosing loop (`continue;`).
+- Using `Break Loop` or `Continue Loop` outside of a loop causes a compile-time error.
+
+### 7. Comments
 Both hash (`#`) and double-slash (`//`) line comments are supported:
 
 ```text
