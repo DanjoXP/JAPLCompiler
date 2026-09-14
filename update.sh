@@ -14,10 +14,10 @@ if command -v git >/dev/null 2>&1 && [ -d ".git" ]; then
     git pull origin master || git pull
 else
     echo "Downloading latest version from GitHub..."
-    curl -L "https://github.com/DanjoXP/JAPLCompiler/archive/refs/heads/master.zip" -o stirlang_update.zip
+    curl -L "https://github.com/DanjoXP/Stirlang-Compiler/archive/refs/heads/master.zip" -o stirlang_update.zip 2>/dev/null || curl -L "https://github.com/DanjoXP/Stirlang-Compiler/archive/refs/heads/main.zip" -o stirlang_update.zip
     unzip -q -o stirlang_update.zip
-    cp -rf JAPLCompiler-master/* . 2>/dev/null || cp -rf *master/* .
-    rm -rf stirlang_update.zip *master
+    cp -rf Stirlang-Compiler-*/* . 2>/dev/null || cp -rf *master/* . 2>/dev/null || cp -rf *main/* . 2>/dev/null
+    rm -rf stirlang_update.zip *master *main Stirlang-Compiler-*
 fi
 
 echo "Rebuilding compiler..."

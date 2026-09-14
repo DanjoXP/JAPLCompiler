@@ -24,9 +24,14 @@ if ($gitInstalled -and $isGitRepo) {
     }
 } else {
     Write-Host "Downloading latest version from GitHub..." -ForegroundColor Yellow
-    $url = "https://github.com/DanjoXP/JAPLCompiler/archive/refs/heads/master.zip"
+    $urlMaster = "https://github.com/DanjoXP/Stirlang-Compiler/archive/refs/heads/master.zip"
+    $urlMain = "https://github.com/DanjoXP/Stirlang-Compiler/archive/refs/heads/main.zip"
     try {
-        Invoke-WebRequest -Uri $url -OutFile "stirlang_update.zip"
+        try {
+            Invoke-WebRequest -Uri $urlMaster -OutFile "stirlang_update.zip"
+        } catch {
+            Invoke-WebRequest -Uri $urlMain -OutFile "stirlang_update.zip"
+        }
         Expand-Archive -Path "stirlang_update.zip" -DestinationPath "stirlang_temp" -Force
         $extracted = Get-ChildItem -Path "stirlang_temp" -Directory | Select-Object -First 1
         if ($extracted) {
