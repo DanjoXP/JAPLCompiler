@@ -8,6 +8,7 @@ public enum DataType {
     DECIMAL("double"),
     STRING("String"),
     BOOLEAN("boolean"),
+    ARRAY("StirlangArray"),
     VOID("void"),
     ANY("Object");
 
@@ -23,5 +24,9 @@ public enum DataType {
 
     public boolean isNumeric() {
         return this == INT || this == DECIMAL;
+    }
+
+    public boolean isArray() {
+        return this == ARRAY;
     }
 }

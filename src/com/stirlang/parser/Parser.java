@@ -37,7 +37,7 @@ public class Parser {
         SourceLocation programStart = peek().getLocation();
 
         while (!isAtEnd()) {
-            if (check(TokenType.BEGIN)) {
+            if (check(TokenType.BEGIN) && checkNext(TokenType.FUNCTION)) {
                 functions.add(parseFunction());
             } else {
                 topLevelStatements.add(parseStatement());
@@ -54,7 +54,7 @@ public class Parser {
 
         if (hasExplicitMain && !topLevelStatements.isEmpty()) {
             throw error(topLevelStatements.get(0).getLocation(),
-                    "Cannot mix top-level statements with an explicit 'Begin Function main()'.");
+                    "Cannot mix top-level statements with an explicit 'begin function main()'.");
         }
 
         if (!hasExplicitMain && !topLevelStatements.isEmpty()) {
@@ -81,13 +81,13 @@ public class Parser {
         SourceLocation funcStart = peek().getLocation();
 
         if (!check(TokenType.BEGIN)) {
-            throw error(peek(), "Expected 'Begin Function' declaration. Statements must be inside a function.");
+            throw error(peek(), "Expected 'begin function' declaration. Statements must be inside a function.");
         }
-        advance(); // consume 'Begin'
+        advance(); // consume 'begin'
 
-        consume(TokenType.FUNCTION, "Expected 'Function' after 'Begin'.");
+        consume(TokenType.FUNCTION, "Expected 'function' after 'begin'.");
 
-        Token nameToken = consume(TokenType.IDENTIFIER, "Expected function name after 'Begin Function'.");
+        Token nameToken = consume(TokenType.IDENTIFIER, "Expected function name after 'begin function'.");
         String functionName = nameToken.getLexeme();
 
         consume(TokenType.LEFT_PAREN, "Expected '(' after function name '" + functionName + "'.");
@@ -105,19 +105,19 @@ public class Parser {
 
         consume(TokenType.RIGHT_PAREN, "Expected ')' after function parameters.");
 
-        // Parse function body statements until 'End Function'
+        // Parse function body statements until 'end function'
         List<StatementNode> bodyStatements = new ArrayList<>();
         while (!isAtEnd() && !isFunctionEnd()) {
             bodyStatements.add(parseStatement());
         }
 
         if (isAtEnd()) {
-            throw error(funcStart, "Missing 'End Function' for function '" + functionName + "'.");
+            throw error(funcStart, "Missing 'end function' for function '" + functionName + "'.");
         }
 
-        // Consume 'End Function'
-        advance(); // consume 'End'
-        consume(TokenType.FUNCTION, "Expected 'Function' after 'End' to close function '" + functionName + "'.");
+        // Consume 'end function'
+        advance(); // consume 'end'
+        consume(TokenType.FUNCTION, "Expected 'function' after 'end' to close function '" + functionName + "'.");
 
         BlockNode body = new BlockNode(bodyStatements, funcStart);
         return new FunctionNode(functionName, parameters, body, funcStart);
@@ -132,7 +132,7 @@ public class Parser {
     // ==========================================
 
     private StatementNode parseStatement() {
-        if (check(TokenType.START) && checkNext(TokenType.LOOP)) {
+        if ((check(TokenType.BEGIN) || check(TokenType.START)) && checkNext(TokenType.LOOP)) {
             return parseLoopStatement();
         }
         if (check(TokenType.BREAK) && checkNext(TokenType.LOOP)) {
@@ -141,14 +141,17 @@ public class Parser {
         if (check(TokenType.CONTINUE) && checkNext(TokenType.LOOP)) {
             return parseContinueStatement();
         }
-        if (check(TokenType.START)) {
-            throw error(peek(), "Expected 'Loop' after 'Start'.");
-        }
         if (check(TokenType.BREAK)) {
-            throw error(peek(), "Expected 'Loop' after 'Break'.");
+            throw error(peek(), "Expected 'loop' after 'break'.");
         }
         if (check(TokenType.CONTINUE)) {
-            throw error(peek(), "Expected 'Loop' after 'Continue'.");
+            throw error(peek(), "Expected 'loop' after 'continue'.");
+        }
+        if (check(TokenType.START)) {
+            throw error(peek(), "Expected 'loop' after 'start'.");
+        }
+        if (check(TokenType.BEGIN)) {
+            throw error(peek(), "Expected 'function' or 'loop' after 'begin'.");
         }
         if (check(TokenType.PRINT)) {
             return parsePrintStatement();
@@ -160,20 +163,33 @@ public class Parser {
             return parseReturnStatement();
         }
         if (check(TokenType.IDENTIFIER)) {
-            if (checkNext(TokenType.LEFT_PAREN)) {
-                FunctionCallExpressionNode call = parseFunctionCall();
-                return new ExpressionStatementNode(call, call.getLocation());
-            } else if (isAssignmentOperator(peekNext().getType())) {
-                return parseAssignmentStatement();
+            ExpressionNode expr = parsePostfix();
+            if (isAssignmentOperator(peek().getType())) {
+                Token op = advance();
+                ExpressionNode value = parseExpression();
+                if (expr instanceof VariableExpressionNode) {
+                    return new AssignmentStatementNode(((VariableExpressionNode) expr).getName(), op.getType(), value, expr.getLocation());
+                } else if (expr instanceof IndexAccessExpressionNode) {
+                    return new IndexAssignmentStatementNode((IndexAccessExpressionNode) expr, op.getType(), value, expr.getLocation());
+                } else {
+                    throw error(op, "Invalid assignment target.");
+                }
+            } else if (expr instanceof FunctionCallExpressionNode || expr instanceof MethodCallExpressionNode) {
+                return new ExpressionStatementNode(expr, expr.getLocation());
+            } else {
+                throw error(peek(), "Unexpected token '" + peek().getLexeme() + "'. Expected an assignment or call.");
             }
         }
 
-        // Detect misplaced 'end if', 'else', or 'End Loop'
+        // Detect misplaced 'end if', 'else', 'end function', or 'end loop'
         if (check(TokenType.END) && checkNext(TokenType.IF)) {
             throw error(peek(), "Unexpected 'end if' without matching 'if' statement.");
         }
         if (check(TokenType.END) && checkNext(TokenType.LOOP)) {
-            throw error(peek(), "Unexpected 'End Loop' without matching 'Start Loop'.");
+            throw error(peek(), "Unexpected 'end loop' without matching 'begin loop'.");
+        }
+        if (check(TokenType.END) && checkNext(TokenType.FUNCTION)) {
+            throw error(peek(), "Unexpected 'end function' without matching 'begin function'.");
         }
         if (check(TokenType.ELSE)) {
             throw error(peek(), "Unexpected 'else' without matching 'if' statement.");
@@ -183,16 +199,16 @@ public class Parser {
     }
 
     private LoopStatementNode parseLoopStatement() {
-        Token startToken = advance(); // consume 'Start'
-        consume(TokenType.LOOP, "Expected 'Loop' after 'Start'.");
-        SourceLocation loopLocation = startToken.getLocation();
+        Token beginToken = advance(); // consume 'begin' or 'start'
+        consume(TokenType.LOOP, "Expected 'loop' after '" + beginToken.getLexeme() + "'.");
+        SourceLocation loopLocation = beginToken.getLocation();
 
         ExpressionNode countExpression = null;
         String counterVariable = null;
 
         if (match(TokenType.LEFT_PAREN)) {
             if (check(TokenType.RIGHT_PAREN)) {
-                throw error(peek(), "Expected loop count expression inside 'Start Loop(...)'.");
+                throw error(peek(), "Expected loop count expression inside 'begin loop(...)'.");
             }
             countExpression = parseExpression();
             consume(TokenType.RIGHT_PAREN, "Expected ')' after loop count expression.");
@@ -202,10 +218,10 @@ public class Parser {
                 counterVariable = varToken.getLexeme();
             }
         } else if (match(TokenType.AS)) {
-            throw error(previous(), "An infinite loop cannot declare a counter variable with 'as'. Use 'Start Loop(count) as <variable>'.");
+            throw error(previous(), "An infinite loop cannot declare a counter variable with 'as'. Use 'begin loop(count) as <variable>'.");
         }
 
-        // Parse loop body statements until 'End Loop'
+        // Parse loop body statements until 'end loop'
         List<StatementNode> bodyStatements = new ArrayList<>();
         while (!isAtEnd() && !isLoopEnd()) {
             checkNotPrematureFunctionEndInLoop();
@@ -214,26 +230,26 @@ public class Parser {
         }
 
         if (isAtEnd()) {
-            throw error(loopLocation, "Expected 'End Loop' before end of file.");
+            throw error(loopLocation, "Expected 'end loop' before end of file.");
         }
 
-        // Consume 'End Loop'
-        consume(TokenType.END, "Expected 'End Loop' to close loop.");
-        consume(TokenType.LOOP, "Expected 'Loop' after 'End' to close loop.");
+        // Consume 'end loop'
+        consume(TokenType.END, "Expected 'end loop' to close loop.");
+        consume(TokenType.LOOP, "Expected 'loop' after 'end' to close loop.");
 
         BlockNode body = new BlockNode(bodyStatements, loopLocation);
         return new LoopStatementNode(countExpression, counterVariable, body, loopLocation);
     }
 
     private BreakStatementNode parseBreakStatement() {
-        Token breakToken = advance(); // consume 'Break'
-        consume(TokenType.LOOP, "Expected 'Loop' after 'Break'.");
+        Token breakToken = advance(); // consume 'break'
+        consume(TokenType.LOOP, "Expected 'loop' after 'break'.");
         return new BreakStatementNode(breakToken.getLocation());
     }
 
     private ContinueStatementNode parseContinueStatement() {
-        Token continueToken = advance(); // consume 'Continue'
-        consume(TokenType.LOOP, "Expected 'Loop' after 'Continue'.");
+        Token continueToken = advance(); // consume 'continue'
+        consume(TokenType.LOOP, "Expected 'loop' after 'continue'.");
         return new ContinueStatementNode(continueToken.getLocation());
     }
 
@@ -243,7 +259,7 @@ public class Parser {
 
     private void checkNotPrematureFunctionEndInLoop() {
         if (isFunctionEnd()) {
-            throw error(peek(), "Expected 'End Loop' before 'End Function'.");
+            throw error(peek(), "Expected 'end loop' before 'end function'.");
         }
     }
 
@@ -339,13 +355,13 @@ public class Parser {
 
     private void checkNotPrematureFunctionEnd() {
         if (isFunctionEnd()) {
-            throw error(peek(), "Expected 'end if' before 'End Function'.");
+            throw error(peek(), "Expected 'end if' before 'end function'.");
         }
     }
 
     private void checkNotPrematureLoopEnd() {
         if (isLoopEnd()) {
-            throw error(peek(), "Expected 'end if' before 'End Loop'.");
+            throw error(peek(), "Expected 'end if' before 'end loop'.");
         }
     }
 
@@ -453,7 +469,35 @@ public class Parser {
             return new UnaryExpressionNode(op.getType(), operand, op.getLocation());
         }
 
-        return parsePrimary();
+        return parsePostfix();
+    }
+
+    private ExpressionNode parsePostfix() {
+        ExpressionNode expr = parsePrimary();
+
+        while (true) {
+            if (match(TokenType.LEFT_BRACKET)) {
+                SourceLocation loc = previous().getLocation();
+                ExpressionNode index = parseExpression();
+                consume(TokenType.RIGHT_BRACKET, "Expected ']' after array index.");
+                expr = new IndexAccessExpressionNode(expr, index, loc);
+            } else if (match(TokenType.DOT)) {
+                Token methodToken = consume(TokenType.IDENTIFIER, "Expected method name after '.'.");
+                consume(TokenType.LEFT_PAREN, "Expected '(' after method name '" + methodToken.getLexeme() + "'.");
+                List<ExpressionNode> arguments = new ArrayList<>();
+                if (!check(TokenType.RIGHT_PAREN)) {
+                    do {
+                        arguments.add(parseExpression());
+                    } while (match(TokenType.COMMA));
+                }
+                consume(TokenType.RIGHT_PAREN, "Expected ')' after method arguments.");
+                expr = new MethodCallExpressionNode(expr, methodToken.getLexeme(), arguments, methodToken.getLocation());
+            } else {
+                break;
+            }
+        }
+
+        return expr;
     }
 
     private ExpressionNode parsePrimary() {
@@ -468,6 +512,9 @@ public class Parser {
         }
         if (match(TokenType.BOOLEAN)) {
             return new LiteralExpressionNode(DataType.BOOLEAN, previous().getLiteral(), previous().getLocation());
+        }
+        if (match(TokenType.LEFT_BRACE)) {
+            return parseArrayLiteral();
         }
         if (check(TokenType.IDENTIFIER)) {
             if (checkNext(TokenType.LEFT_PAREN)) {
@@ -484,6 +531,18 @@ public class Parser {
         }
 
         throw error(peek(), "Expected expression, but found '" + peek().getLexeme() + "'.");
+    }
+
+    private ArrayLiteralNode parseArrayLiteral() {
+        SourceLocation loc = previous().getLocation();
+        List<ExpressionNode> elements = new ArrayList<>();
+        if (!check(TokenType.RIGHT_BRACE)) {
+            do {
+                elements.add(parseExpression());
+            } while (match(TokenType.COMMA));
+        }
+        consume(TokenType.RIGHT_BRACE, "Expected '}' after array elements.");
+        return new ArrayLiteralNode(elements, loc);
     }
 
     private FunctionCallExpressionNode parseFunctionCall() {

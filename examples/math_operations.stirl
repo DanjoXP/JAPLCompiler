@@ -1,4 +1,4 @@
-Begin Function main()
+begin function main()
 
     # Mathematical operations and precedence
     a = 10
@@ -19,4 +19,4 @@ Begin Function main()
     score /= 4
     print("Final score = " + score)
 
-End Function
+end function

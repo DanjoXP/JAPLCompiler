@@ -1,0 +1,47 @@
+// Loop demonstration in Stirlang
+
+begin function main()
+    print("--- 1. Counted Loop with Counter Variable ---")
+    begin loop(5) as i
+        print("Iteration: " + i)
+    end loop
+
+    print("--- 2. Counted Loop without Exposed Counter ---")
+    sum = 0
+    begin loop(3)
+        sum += 10
+    end loop
+    print("Total sum after 3 loops: " + sum)
+
+    print("--- 3. Nested Loops ---")
+    begin loop(2) as row
+        begin loop(3) as col
+            print("Cell (" + row + ", " + col + ")")
+        end loop
+    end loop
+
+    print("--- 4. Break and Continue ---")
+    begin loop(10) as n
+        if n == 2
+            print("Skipping 2 with Continue Loop")
+            continue loop
+        end if
+        if n == 5
+            print("Breaking at 5 with Break Loop")
+            break loop
+        end if
+        print("Number: " + n)
+    end loop
+
+    print("--- 5. Infinite Loop with Break Loop ---")
+    counter = 0
+    begin loop
+        counter += 1
+        if counter == 3
+            print("Exiting infinite loop at count: " + counter)
+            break loop
+        end if
+    end loop
+
+    print("Loop demo complete!")
+end function

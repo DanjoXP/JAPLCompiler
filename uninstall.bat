@@ -19,11 +19,11 @@ if exist stirlang.jar del /f /q stirlang.jar
 
 echo.
 echo =========================================================
-echo  [SUCCESS] Stirlang has been uninstalled!
+echo  [SUCCESS] Stirlang has been uninstalled.
 echo.
 echo  1. The 'stirlang' command has been removed from your PATH.
 echo  2. Compiled binaries and stirlang.jar have been cleaned.
-echo  (To reinstall at any time, simply run build.bat again)
+echo  (To reinstall at any time, simply run install.bat again)
 echo =========================================================
 echo.
-pause
+if not "%1"=="--no-pause" pause

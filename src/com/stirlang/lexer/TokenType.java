@@ -5,18 +5,18 @@ package com.stirlang.lexer;
  */
 public enum TokenType {
     // Keywords
-    BEGIN("Begin"),
-    FUNCTION("Function"),
-    END("End"),
+    BEGIN("begin"),
+    FUNCTION("function"),
+    END("end"),
     IF("if"),
     ELSE("else"),
     PRINT("print"),
     RETURN("return"),
-    START("Start"),
-    LOOP("Loop"),
+    START("start"),
+    LOOP("loop"),
     AS("as"),
-    BREAK("Break"),
-    CONTINUE("Continue"),
+    BREAK("break"),
+    CONTINUE("continue"),
 
     // Literals & Identifiers
     IDENTIFIER("identifier"),
@@ -28,6 +28,11 @@ public enum TokenType {
     // Delimiters & Punctuation
     LEFT_PAREN("("),
     RIGHT_PAREN(")"),
+    LEFT_BRACE("{"),
+    RIGHT_BRACE("}"),
+    LEFT_BRACKET("["),
+    RIGHT_BRACKET("]"),
+    DOT("."),
     COMMA(","),
 
     // Arithmetic Operators

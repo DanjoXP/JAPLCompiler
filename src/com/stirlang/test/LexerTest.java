@@ -12,7 +12,7 @@ import static com.stirlang.test.StirlangTestRunner.*;
 public class LexerTest {
 
     public void testKeywords() {
-        String code = "Begin Function End if else print return";
+        String code = "begin function end if else print return loop as break continue";
         Lexer lexer = new Lexer(code);
         List<Token> tokens = lexer.tokenize();
 
@@ -23,7 +23,11 @@ public class LexerTest {
         assertEquals(TokenType.ELSE, tokens.get(4).getType());
         assertEquals(TokenType.PRINT, tokens.get(5).getType());
         assertEquals(TokenType.RETURN, tokens.get(6).getType());
-        assertEquals(TokenType.EOF, tokens.get(7).getType());
+        assertEquals(TokenType.LOOP, tokens.get(7).getType());
+        assertEquals(TokenType.AS, tokens.get(8).getType());
+        assertEquals(TokenType.BREAK, tokens.get(9).getType());
+        assertEquals(TokenType.CONTINUE, tokens.get(10).getType());
+        assertEquals(TokenType.EOF, tokens.get(11).getType());
     }
 
     public void testLiterals() {
@@ -136,5 +140,34 @@ public class LexerTest {
         assertThrows(LexerException.class, () -> {
             new Lexer("x = @ + 1").tokenize();
         }, "Should throw LexerException for unrecognized symbol");
+    }
+
+    public void testArrayTokens() {
+        String code = "a = {1, 2, 3} a[0] a.addToEnd(4)";
+        Lexer lexer = new Lexer(code);
+        List<Token> tokens = lexer.tokenize();
+
+        assertEquals(TokenType.IDENTIFIER, tokens.get(0).getType());
+        assertEquals(TokenType.ASSIGN, tokens.get(1).getType());
+        assertEquals(TokenType.LEFT_BRACE, tokens.get(2).getType());
+        assertEquals(TokenType.INTEGER, tokens.get(3).getType());
+        assertEquals(TokenType.COMMA, tokens.get(4).getType());
+        assertEquals(TokenType.INTEGER, tokens.get(5).getType());
+        assertEquals(TokenType.COMMA, tokens.get(6).getType());
+        assertEquals(TokenType.INTEGER, tokens.get(7).getType());
+        assertEquals(TokenType.RIGHT_BRACE, tokens.get(8).getType());
+
+        assertEquals(TokenType.IDENTIFIER, tokens.get(9).getType());
+        assertEquals(TokenType.LEFT_BRACKET, tokens.get(10).getType());
+        assertEquals(TokenType.INTEGER, tokens.get(11).getType());
+        assertEquals(TokenType.RIGHT_BRACKET, tokens.get(12).getType());
+
+        assertEquals(TokenType.IDENTIFIER, tokens.get(13).getType());
+        assertEquals(TokenType.DOT, tokens.get(14).getType());
+        assertEquals(TokenType.IDENTIFIER, tokens.get(15).getType());
+        assertEquals("addToEnd", tokens.get(15).getLexeme());
+        assertEquals(TokenType.LEFT_PAREN, tokens.get(16).getType());
+        assertEquals(TokenType.INTEGER, tokens.get(17).getType());
+        assertEquals(TokenType.RIGHT_PAREN, tokens.get(18).getType());
     }
 }

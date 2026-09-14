@@ -9,9 +9,9 @@ import java.util.List;
  * Represents a function declaration in Stirlang.
  *
  * Example:
- * Begin Function greet(name)
+ * begin function greet(name)
  *     print(name)
- * End Function
+ * end function
  */
 public class FunctionNode extends ASTNode {
     private final String name;

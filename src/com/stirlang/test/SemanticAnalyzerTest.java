@@ -24,7 +24,7 @@ public class SemanticAnalyzerTest {
     }
 
     public void testMissingMainThrowsException() {
-        String code = "Begin Function greet(name)\nprint(name)\nEnd Function";
+        String code = "begin function greet(name)\nprint(name)\nend function";
         Lexer[] lexerRef = new Lexer[1];
         ProgramNode program = parse(code, lexerRef);
         SemanticAnalyzer analyzer = new SemanticAnalyzer(lexerRef[0]);
@@ -37,7 +37,7 @@ public class SemanticAnalyzerTest {
     }
 
     public void testTopLevelFunctionCallWithoutMain() {
-        String code = "Begin Function greet(name)\nprint(name)\nEnd Function\ngreet(\"Danny\")";
+        String code = "begin function greet(name)\nprint(name)\nend function\ngreet(\"Danny\")";
         Lexer[] lexerRef = new Lexer[1];
         ProgramNode program = parse(code, lexerRef);
         SemanticAnalyzer analyzer = new SemanticAnalyzer(lexerRef[0]);
@@ -48,7 +48,7 @@ public class SemanticAnalyzerTest {
     }
 
     public void testDuplicateFunctionThrowsException() {
-        String code = "Begin Function main()\nEnd Function\nBegin Function main()\nEnd Function";
+        String code = "begin function main()\nend function\nbegin function main()\nend function";
         Lexer[] lexerRef = new Lexer[1];
         ProgramNode program = parse(code, lexerRef);
         SemanticAnalyzer analyzer = new SemanticAnalyzer(lexerRef[0]);
@@ -61,7 +61,7 @@ public class SemanticAnalyzerTest {
     }
 
     public void testUndeclaredVariableThrowsException() {
-        String code = "Begin Function main()\nprint(age)\nEnd Function";
+        String code = "begin function main()\nprint(age)\nend function";
         Lexer[] lexerRef = new Lexer[1];
         ProgramNode program = parse(code, lexerRef);
         SemanticAnalyzer analyzer = new SemanticAnalyzer(lexerRef[0]);
@@ -74,7 +74,7 @@ public class SemanticAnalyzerTest {
     }
 
     public void testTypeMismatchThrowsException() {
-        String code = "Begin Function main()\nage = 30\nage = \"Thirty\"\nEnd Function";
+        String code = "begin function main()\nage = 30\nage = \"Thirty\"\nend function";
         Lexer[] lexerRef = new Lexer[1];
         ProgramNode program = parse(code, lexerRef);
         SemanticAnalyzer analyzer = new SemanticAnalyzer(lexerRef[0]);
@@ -88,7 +88,7 @@ public class SemanticAnalyzerTest {
     }
 
     public void testCompoundAssignmentOnUndeclaredThrowsException() {
-        String code = "Begin Function main()\ntotal += 10\nEnd Function";
+        String code = "begin function main()\ntotal += 10\nend function";
         Lexer[] lexerRef = new Lexer[1];
         ProgramNode program = parse(code, lexerRef);
         SemanticAnalyzer analyzer = new SemanticAnalyzer(lexerRef[0]);
@@ -101,12 +101,12 @@ public class SemanticAnalyzerTest {
     }
 
     public void testCounterVariableScopedToLoop() {
-        String code = "Begin Function main()\n" +
-                      "Start Loop(5) as i\n" +
+        String code = "begin function main()\n" +
+                      "begin loop(5) as i\n" +
                       "    print(i)\n" +
-                      "End Loop\n" +
+                      "end loop\n" +
                       "print(i)\n" +
-                      "End Function";
+                      "end function";
         Lexer[] lexerRef = new Lexer[1];
         ProgramNode program = parse(code, lexerRef);
         SemanticAnalyzer analyzer = new SemanticAnalyzer(lexerRef[0]);
@@ -120,9 +120,9 @@ public class SemanticAnalyzerTest {
     }
 
     public void testBreakOutsideLoopThrowsException() {
-        String code = "Begin Function main()\n" +
-                      "Break Loop\n" +
-                      "End Function";
+        String code = "begin function main()\n" +
+                      "break loop\n" +
+                      "end function";
         Lexer[] lexerRef = new Lexer[1];
         ProgramNode program = parse(code, lexerRef);
         SemanticAnalyzer analyzer = new SemanticAnalyzer(lexerRef[0]);
@@ -131,14 +131,14 @@ public class SemanticAnalyzerTest {
             analyzer.analyze(program);
         }, "Should throw SemanticException for Break Loop outside loop");
 
-        assertTrue(ex.getMessage().contains("'Break Loop' cannot be used outside of a loop"),
-                "Error message should mention Break Loop cannot be used outside of a loop");
+        assertTrue(ex.getMessage().contains("'break loop' cannot be used outside of a loop"),
+                "Error message should mention break loop cannot be used outside of a loop");
     }
 
     public void testContinueOutsideLoopThrowsException() {
-        String code = "Begin Function main()\n" +
-                      "Continue Loop\n" +
-                      "End Function";
+        String code = "begin function main()\n" +
+                      "continue loop\n" +
+                      "end function";
         Lexer[] lexerRef = new Lexer[1];
         ProgramNode program = parse(code, lexerRef);
         SemanticAnalyzer analyzer = new SemanticAnalyzer(lexerRef[0]);
@@ -147,16 +147,16 @@ public class SemanticAnalyzerTest {
             analyzer.analyze(program);
         }, "Should throw SemanticException for Continue Loop outside loop");
 
-        assertTrue(ex.getMessage().contains("'Continue Loop' cannot be used outside of a loop"),
-                "Error message should mention Continue Loop cannot be used outside of a loop");
+        assertTrue(ex.getMessage().contains("'continue loop' cannot be used outside of a loop"),
+                "Error message should mention continue loop cannot be used outside of a loop");
     }
 
     public void testNonNumericLoopCountThrowsException() {
-        String code = "Begin Function main()\n" +
-                      "Start Loop(\"not a number\")\n" +
+        String code = "begin function main()\n" +
+                      "begin loop(\"not a number\")\n" +
                       "    print(\"Hello\")\n" +
-                      "End Loop\n" +
-                      "End Function";
+                      "end loop\n" +
+                      "end function";
         Lexer[] lexerRef = new Lexer[1];
         ProgramNode program = parse(code, lexerRef);
         SemanticAnalyzer analyzer = new SemanticAnalyzer(lexerRef[0]);
@@ -170,12 +170,12 @@ public class SemanticAnalyzerTest {
     }
 
     public void testRedeclaringVariableAsCounterThrowsException() {
-        String code = "Begin Function main()\n" +
+        String code = "begin function main()\n" +
                       "i = 10\n" +
-                      "Start Loop(5) as i\n" +
+                      "begin loop(5) as i\n" +
                       "    print(i)\n" +
-                      "End Loop\n" +
-                      "End Function";
+                      "end loop\n" +
+                      "end function";
         Lexer[] lexerRef = new Lexer[1];
         ProgramNode program = parse(code, lexerRef);
         SemanticAnalyzer analyzer = new SemanticAnalyzer(lexerRef[0]);
@@ -186,5 +186,103 @@ public class SemanticAnalyzerTest {
 
         assertTrue(ex.getMessage().contains("already declared in an enclosing scope"),
                 "Error message should mention variable already declared in an enclosing scope");
+    }
+
+    public void testMixedTypeArrayThrowsException() {
+        String code = "begin function main()\na = {1, \"hello\", 3}\nend function";
+        Lexer[] lexerRef = new Lexer[1];
+        ProgramNode program = parse(code, lexerRef);
+        SemanticAnalyzer analyzer = new SemanticAnalyzer(lexerRef[0]);
+
+        SemanticException ex = assertThrows(SemanticException.class, () -> {
+            analyzer.analyze(program);
+        }, "Should throw SemanticException for mixed-type array");
+
+        assertTrue(ex.getMessage().contains("all elements must have the same type"),
+                "Error message should mention all elements must have the same type, got: " + ex.getMessage());
+    }
+
+    public void testNonIntegerIndexThrowsException() {
+        String code = "begin function main()\na = {1, 2, 3}\nprint(a[\"zero\"])\nend function";
+        Lexer[] lexerRef = new Lexer[1];
+        ProgramNode program = parse(code, lexerRef);
+        SemanticAnalyzer analyzer = new SemanticAnalyzer(lexerRef[0]);
+
+        SemanticException ex = assertThrows(SemanticException.class, () -> {
+            analyzer.analyze(program);
+        }, "Should throw SemanticException for non-integer array index");
+
+        assertTrue(ex.getMessage().contains("Array index must be an integer"),
+                "Error message should mention array index must be an integer, got: " + ex.getMessage());
+    }
+
+    public void testIndexAccessOnNonArrayThrowsException() {
+        String code = "begin function main()\nx = 10\nprint(x[0])\nend function";
+        Lexer[] lexerRef = new Lexer[1];
+        ProgramNode program = parse(code, lexerRef);
+        SemanticAnalyzer analyzer = new SemanticAnalyzer(lexerRef[0]);
+
+        SemanticException ex = assertThrows(SemanticException.class, () -> {
+            analyzer.analyze(program);
+        }, "Should throw SemanticException for indexing into non-array");
+
+        assertTrue(ex.getMessage().contains("Cannot index into non-array"),
+                "Error message should mention cannot index into non-array, got: " + ex.getMessage());
+    }
+
+    public void testUnknownMethodOnArrayThrowsException() {
+        String code = "begin function main()\na = {1, 2, 3}\na.unknownMethod(5)\nend function";
+        Lexer[] lexerRef = new Lexer[1];
+        ProgramNode program = parse(code, lexerRef);
+        SemanticAnalyzer analyzer = new SemanticAnalyzer(lexerRef[0]);
+
+        SemanticException ex = assertThrows(SemanticException.class, () -> {
+            analyzer.analyze(program);
+        }, "Should throw SemanticException for unknown array method");
+
+        assertTrue(ex.getMessage().contains("Unknown array method"),
+                "Error message should mention unknown array method, got: " + ex.getMessage());
+    }
+
+    public void testInvalidMethodArgumentCountThrowsException() {
+        String code = "begin function main()\na = {1, 2, 3}\na.addToEnd()\nend function";
+        Lexer[] lexerRef = new Lexer[1];
+        ProgramNode program = parse(code, lexerRef);
+        SemanticAnalyzer analyzer = new SemanticAnalyzer(lexerRef[0]);
+
+        SemanticException ex = assertThrows(SemanticException.class, () -> {
+            analyzer.analyze(program);
+        }, "Should throw SemanticException for invalid method argument count");
+
+        assertTrue(ex.getMessage().contains("Method 'addToEnd' expects 1 argument"),
+                "Error message should mention method expects 1 argument, got: " + ex.getMessage());
+    }
+
+    public void testNestedArrayTypeMismatchThrowsException() {
+        String code = "begin function main()\na = {{1, 2}, {\"a\", \"b\"}}\nend function";
+        Lexer[] lexerRef = new Lexer[1];
+        ProgramNode program = parse(code, lexerRef);
+        SemanticAnalyzer analyzer = new SemanticAnalyzer(lexerRef[0]);
+
+        SemanticException ex = assertThrows(SemanticException.class, () -> {
+            analyzer.analyze(program);
+        }, "Should throw SemanticException for nested array type mismatch");
+
+        assertTrue(ex.getMessage().contains("Nested array element type mismatch"),
+                "Error message should mention nested array element type mismatch, got: " + ex.getMessage());
+    }
+
+    public void testIndexAssignTypeMismatchThrowsException() {
+        String code = "begin function main()\na = {1, 2, 3}\na[0] = \"hello\"\nend function";
+        Lexer[] lexerRef = new Lexer[1];
+        ProgramNode program = parse(code, lexerRef);
+        SemanticAnalyzer analyzer = new SemanticAnalyzer(lexerRef[0]);
+
+        SemanticException ex = assertThrows(SemanticException.class, () -> {
+            analyzer.analyze(program);
+        }, "Should throw SemanticException for assigning wrong type to array element");
+
+        assertTrue(ex.getMessage().contains("Cannot assign value of type STRING to array element of type INT"),
+                "Error message should mention Cannot assign value of type STRING to array element of type INT, got: " + ex.getMessage());
     }
 }

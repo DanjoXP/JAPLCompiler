@@ -1,7 +1,7 @@
-# Demonstrates calling functions without requiring a Begin Function main() block.
-Begin Function GreetPerson(name)
+# Demonstrates calling functions without requiring a begin function main() block.
+begin function GreetPerson(name)
     print("Hello, " + name + "!")
-End Function
+end function
 
 # Top-level call acts as the program's access point
 GreetPerson("Danny")

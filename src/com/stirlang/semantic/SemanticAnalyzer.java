@@ -46,7 +46,7 @@ public class SemanticAnalyzer {
 
         // Check for required entry point
         if (!functionMap.containsKey("main")) {
-            throw error(program.getLocation(), "No Access Point. At least one function must be called, or 'Begin Function main()' must be defined.");
+            throw error(program.getLocation(), "No Access Point. At least one function must be called, or 'begin function main()' must be defined.");
         }
 
         // Pass 2: Analyze function bodies
@@ -90,6 +90,8 @@ public class SemanticAnalyzer {
             analyzeContinue((ContinueStatementNode) stmt);
         } else if (stmt instanceof ReturnStatementNode) {
             analyzeReturn((ReturnStatementNode) stmt);
+        } else if (stmt instanceof IndexAssignmentStatementNode) {
+            analyzeIndexAssignment((IndexAssignmentStatementNode) stmt);
         } else if (stmt instanceof ExpressionStatementNode) {
             analyzeExpression(((ExpressionStatementNode) stmt).getExpression());
         }
@@ -128,13 +130,13 @@ public class SemanticAnalyzer {
 
     private void analyzeBreak(BreakStatementNode breakStmt) {
         if (loopDepth <= 0) {
-            throw error(breakStmt.getLocation(), "'Break Loop' cannot be used outside of a loop.");
+            throw error(breakStmt.getLocation(), "'break loop' cannot be used outside of a loop.");
         }
     }
 
     private void analyzeContinue(ContinueStatementNode continueStmt) {
         if (loopDepth <= 0) {
-            throw error(continueStmt.getLocation(), "'Continue Loop' cannot be used outside of a loop.");
+            throw error(continueStmt.getLocation(), "'continue loop' cannot be used outside of a loop.");
         }
     }
 
@@ -159,11 +161,31 @@ public class SemanticAnalyzer {
             assign.setVariableType(varType);
 
             Symbol newSymbol = new Symbol(varName, varType, assign.getLocation(), false);
+            if (value instanceof ArrayLiteralNode) {
+                ArrayLiteralNode lit = (ArrayLiteralNode) value;
+                newSymbol.setArrayElementType(lit.getElementType());
+                if (lit.getElementType() == DataType.ARRAY && !lit.getElements().isEmpty()) {
+                    ExpressionNode first = lit.getElements().get(0);
+                    if (first instanceof ArrayLiteralNode) {
+                        newSymbol.setNestedArrayElementType(((ArrayLiteralNode) first).getElementType());
+                    }
+                }
+            } else if (value instanceof VariableExpressionNode) {
+                Symbol rhsSym = currentScope.resolve(((VariableExpressionNode) value).getName());
+                if (rhsSym != null) {
+                    newSymbol.setArrayElementType(rhsSym.getArrayElementType());
+                    newSymbol.setNestedArrayElementType(rhsSym.getNestedArrayElementType());
+                }
+            }
             currentScope.define(newSymbol);
         } else {
             // Re-assignment
             assign.setDeclaration(false);
             assign.setVariableType(existing.getType());
+            if (value instanceof ArrayLiteralNode) {
+                ArrayLiteralNode lit = (ArrayLiteralNode) value;
+                existing.setArrayElementType(lit.getElementType());
+            }
 
             if (assign.getOperator() == TokenType.ASSIGN) {
                 // Check type compatibility
@@ -263,6 +285,12 @@ public class SemanticAnalyzer {
             analyzeBinary((BinaryExpressionNode) expr);
         } else if (expr instanceof FunctionCallExpressionNode) {
             analyzeFunctionCall((FunctionCallExpressionNode) expr);
+        } else if (expr instanceof ArrayLiteralNode) {
+            analyzeArrayLiteral((ArrayLiteralNode) expr);
+        } else if (expr instanceof IndexAccessExpressionNode) {
+            analyzeIndexAccess((IndexAccessExpressionNode) expr);
+        } else if (expr instanceof MethodCallExpressionNode) {
+            analyzeMethodCall((MethodCallExpressionNode) expr);
         }
     }
 
@@ -392,6 +420,168 @@ public class SemanticAnalyzer {
         }
 
         call.setEvaluatedType(target.getReturnType());
+    }
+
+    private void analyzeIndexAssignment(IndexAssignmentStatementNode assign) {
+        IndexAccessExpressionNode target = assign.getTarget();
+        analyzeIndexAccess(target);
+        analyzeExpression(assign.getValue());
+
+        DataType valType = assign.getValue().getEvaluatedType();
+        DataType targetElemType = target.getElementType();
+
+        if (targetElemType != null && targetElemType != DataType.ANY && valType != null && valType != DataType.ANY) {
+            if (!isTypeAssignable(targetElemType, valType)) {
+                throw error(assign.getLocation(),
+                        "Cannot assign value of type " + valType + " to array element of type " + targetElemType + ".");
+            }
+        }
+    }
+
+    private void analyzeArrayLiteral(ArrayLiteralNode arrayLiteral) {
+        java.util.List<ExpressionNode> elements = arrayLiteral.getElements();
+        DataType elementType = DataType.ANY;
+
+        if (!elements.isEmpty()) {
+            for (ExpressionNode elem : elements) {
+                analyzeExpression(elem);
+            }
+
+            DataType firstConcreteType = null;
+            for (ExpressionNode elem : elements) {
+                if (elem.getEvaluatedType() != null && elem.getEvaluatedType() != DataType.ANY) {
+                    firstConcreteType = elem.getEvaluatedType();
+                    break;
+                }
+            }
+
+            if (firstConcreteType != null) {
+                for (ExpressionNode elem : elements) {
+                    DataType t = elem.getEvaluatedType();
+                    if (t != null && t != DataType.ANY && t != firstConcreteType) {
+                        throw error(elem.getLocation(),
+                                "Array element type mismatch: all elements must have the same type, but found " +
+                                firstConcreteType + " and " + t + ".");
+                    }
+                    if (elem instanceof ArrayLiteralNode && firstConcreteType == DataType.ARRAY) {
+                        ArrayLiteralNode sub = (ArrayLiteralNode) elem;
+                        if (sub.getElementType() != null && sub.getElementType() != DataType.ANY) {
+                            for (ExpressionNode other : elements) {
+                                if (other instanceof ArrayLiteralNode && other != sub) {
+                                    ArrayLiteralNode otherSub = (ArrayLiteralNode) other;
+                                    if (otherSub.getElementType() != null && otherSub.getElementType() != DataType.ANY &&
+                                            otherSub.getElementType() != sub.getElementType()) {
+                                        throw error(other.getLocation(),
+                                                "Nested array element type mismatch: found array of " +
+                                                sub.getElementType() + " and array of " + otherSub.getElementType() + ".");
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                elementType = firstConcreteType;
+            }
+        }
+
+        arrayLiteral.setElementType(elementType);
+        arrayLiteral.setEvaluatedType(DataType.ARRAY);
+    }
+
+    private void analyzeIndexAccess(IndexAccessExpressionNode indexAccess) {
+        analyzeExpression(indexAccess.getTarget());
+        analyzeExpression(indexAccess.getIndex());
+
+        DataType targetType = indexAccess.getTarget().getEvaluatedType();
+        DataType indexType = indexAccess.getIndex().getEvaluatedType();
+
+        if (targetType != DataType.ANY && targetType != DataType.ARRAY) {
+            throw error(indexAccess.getLocation(), "Cannot index into non-array value of type " + targetType + ".");
+        }
+
+        if (indexType != DataType.ANY && !indexType.isNumeric()) {
+            throw error(indexAccess.getIndex().getLocation(), "Array index must be an integer, but found " + indexType + ".");
+        }
+
+        DataType elemType = DataType.ANY;
+        if (indexAccess.getTarget() instanceof ArrayLiteralNode) {
+            elemType = ((ArrayLiteralNode) indexAccess.getTarget()).getElementType();
+        } else if (indexAccess.getTarget() instanceof VariableExpressionNode) {
+            String varName = ((VariableExpressionNode) indexAccess.getTarget()).getName();
+            Symbol sym = currentScope.resolve(varName);
+            if (sym != null && sym.getArrayElementType() != null) {
+                elemType = sym.getArrayElementType();
+            }
+        } else if (indexAccess.getTarget() instanceof IndexAccessExpressionNode) {
+            IndexAccessExpressionNode parent = (IndexAccessExpressionNode) indexAccess.getTarget();
+            if (parent.getElementType() == DataType.ARRAY) {
+                if (parent.getTarget() instanceof VariableExpressionNode) {
+                    Symbol sym = currentScope.resolve(((VariableExpressionNode) parent.getTarget()).getName());
+                    if (sym != null && sym.getNestedArrayElementType() != null) {
+                        elemType = sym.getNestedArrayElementType();
+                    }
+                }
+            } else {
+                elemType = parent.getElementType();
+            }
+        }
+        indexAccess.setElementType(elemType);
+        indexAccess.setEvaluatedType(elemType != null ? elemType : DataType.ANY);
+    }
+
+    private void analyzeMethodCall(MethodCallExpressionNode call) {
+        analyzeExpression(call.getTarget());
+        for (ExpressionNode arg : call.getArguments()) {
+            analyzeExpression(arg);
+        }
+
+        DataType targetType = call.getTarget().getEvaluatedType();
+        if (targetType != DataType.ANY && targetType != DataType.ARRAY) {
+            throw error(call.getLocation(), "Cannot call method '" + call.getMethodName() + "' on non-array value of type " + targetType + ".");
+        }
+
+        String name = call.getMethodName();
+        java.util.List<ExpressionNode> args = call.getArguments();
+
+        switch (name) {
+            case "addToEnd":
+            case "addToFront": {
+                if (args.size() != 1) {
+                    throw error(call.getLocation(), "Method '" + name + "' expects 1 argument, but found " + args.size() + ".");
+                }
+                break;
+            }
+            case "add": {
+                if (args.size() != 2) {
+                    throw error(call.getLocation(), "Method 'add' expects 2 arguments (value, index), but found " + args.size() + ".");
+                }
+                DataType idxType = args.get(1).getEvaluatedType();
+                if (idxType != DataType.ANY && !idxType.isNumeric()) {
+                    throw error(args.get(1).getLocation(), "Method 'add' second argument (index) must be an integer, but found " + idxType + ".");
+                }
+                break;
+            }
+            case "remove": {
+                if (args.size() != 1) {
+                    throw error(call.getLocation(), "Method 'remove' expects 1 argument (value), but found " + args.size() + ".");
+                }
+                break;
+            }
+            case "removeIndex": {
+                if (args.size() != 1) {
+                    throw error(call.getLocation(), "Method 'removeIndex' expects 1 argument (index), but found " + args.size() + ".");
+                }
+                DataType idxType = args.get(0).getEvaluatedType();
+                if (idxType != DataType.ANY && !idxType.isNumeric()) {
+                    throw error(args.get(0).getLocation(), "Method 'removeIndex' argument (index) must be an integer, but found " + idxType + ".");
+                }
+                break;
+            }
+            default:
+                throw error(call.getLocation(), "Unknown array method '" + name + "'. Valid methods: addToEnd, addToFront, add, remove, removeIndex.");
+        }
+
+        call.setEvaluatedType(DataType.VOID);
     }
 
     private boolean isTypeAssignable(DataType target, DataType source) {

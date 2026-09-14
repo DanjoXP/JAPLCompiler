@@ -11,6 +11,9 @@ public class Symbol {
     private final SourceLocation location;
     private final boolean isParameter;
 
+    private DataType arrayElementType = null;
+    private DataType nestedArrayElementType = null;
+
     public Symbol(String name, DataType type, SourceLocation location, boolean isParameter) {
         this.name = name;
         this.type = type;
@@ -28,6 +31,22 @@ public class Symbol {
 
     public void setType(DataType type) {
         this.type = type;
+    }
+
+    public DataType getArrayElementType() {
+        return arrayElementType;
+    }
+
+    public void setArrayElementType(DataType arrayElementType) {
+        this.arrayElementType = arrayElementType;
+    }
+
+    public DataType getNestedArrayElementType() {
+        return nestedArrayElementType;
+    }
+
+    public void setNestedArrayElementType(DataType nestedArrayElementType) {
+        this.nestedArrayElementType = nestedArrayElementType;
     }
 
     public SourceLocation getLocation() {

@@ -1,6 +1,6 @@
-Begin Function main()
+begin function main()
 
     name = "World"
     print("Hello " + name)
 
-End Function
+end function

@@ -7,19 +7,19 @@ import com.stirlang.common.SourceLocation;
  *
  * Supports three forms:
  * 1. Infinite loop:
- *    Start Loop
+ *    begin loop
  *        // code
- *    End Loop
+ *    end loop
  *
  * 2. Counted loop with exposed counter:
- *    Start Loop(10) as i
+ *    begin loop(10) as i
  *        print(i)
- *    End Loop
+ *    end loop
  *
  * 3. Counted loop without exposed counter:
- *    Start Loop(10)
+ *    begin loop(10)
  *        // code
- *    End Loop
+ *    end loop
  */
 public class LoopStatementNode extends StatementNode {
     private final ExpressionNode countExpression;

@@ -75,7 +75,11 @@ Stirlang/
 │       │   ├── FunctionNode.java              # Function declaration
 │       │   ├── StatementNode.java             # Statement base class
 │       │   ├── BlockNode.java                 # Block statement list
+│       │   ├── LoopStatementNode.java         # Loop statement (counted / infinite)
+│       │   ├── BreakStatementNode.java        # break loop statement
+│       │   ├── ContinueStatementNode.java     # continue loop statement
 │       │   ├── AssignmentStatementNode.java   # Variable assignment & compound ops
+│       │   ├── IndexAssignmentStatementNode.java # Array index assignment (a[0] = val)
 │       │   ├── PrintStatementNode.java        # print(...) statement
 │       │   ├── IfStatementNode.java           # if / else if / else conditional
 │       │   ├── ReturnStatementNode.java       # return statement
@@ -84,15 +88,21 @@ Stirlang/
 │       │   ├── BinaryExpressionNode.java      # Binary operators (+, -, *, ==, and, etc.)
 │       │   ├── UnaryExpressionNode.java       # Unary operators (-, not, !)
 │       │   ├── LiteralExpressionNode.java     # Int, Decimal, String, Boolean literals
+│       │   ├── ArrayLiteralNode.java          # Array literal ({1, 2, 3})
+│       │   ├── IndexAccessExpressionNode.java # Index access (a[0], a[-1], a[0][1])
+│       │   ├── MethodCallExpressionNode.java  # Array methods (a.addToEnd(val))
 │       │   ├── VariableExpressionNode.java    # Identifier reference
 │       │   └── FunctionCallExpressionNode.java# Function invocation
 │       ├── parser/
 │       │   └── Parser.java                    # Recursive descent parser
 │       ├── semantic/
-│       │   ├── DataType.java                  # INT, DECIMAL, STRING, BOOLEAN, VOID, ANY
+│       │   ├── DataType.java                  # INT, DECIMAL, STRING, BOOLEAN, VOID, ARRAY, ANY
 │       │   ├── Symbol.java                    # Variable & parameter metadata
 │       │   ├── SymbolTable.java               # Scoped symbol table
 │       │   └── SemanticAnalyzer.java          # Scoping and type checking
+│       ├── runtime/
+│       │   ├── StirlangArray.java             # Dynamic homogeneous array runtime representation
+│       │   └── StirlangRuntimeError.java      # User-friendly runtime error handling
 │       ├── codegen/
 │       │   └── JavaCodeGenerator.java         # Pretty-printed Java emitter
 │       ├── compiler/
@@ -112,21 +122,13 @@ Stirlang/
 │   ├── math_operations.stirl                  # Operator precedence & compound assign
 │   ├── comparisons.stirl                      # English-readable operators demonstration
 │   ├── functions.stirl                        # Parameter passing & return values
+│   ├── loops.stirl                            # Infinite, counted, break & continue loops
+│   ├── arrays.stirl                           # Dynamic arrays, indexing, methods & nested arrays
 │   ├── no_main_demo.stirl                     # Direct function call entry point
 │   └── error_demo.stirl                       # User-friendly error diagnostics
-├── build.bat                                  # Windows CMD one-click build & install
-├── build.ps1                                  # Windows PowerShell build & install
-├── build.sh                                   # Linux / macOS build script
-├── update.bat                                 # Windows CMD GitHub updater
-├── update.ps1                                 # Windows PowerShell GitHub updater
-├── update.sh                                  # Linux / macOS GitHub updater
-├── uninstall.bat                              # One-click Windows uninstaller
-├── uninstall.ps1                              # PowerShell uninstaller
-├── uninstall.sh                               # Linux / macOS uninstaller
-├── stirlang.bat / stirl.bat                   # Windows CMD CLI launchers
-├── stirlang.cmd / stirl.cmd                   # Windows CMD alternative launchers
-├── stirlang.ps1 / stirl.ps1                   # Windows PowerShell launchers
-├── stirlang / stirl                           # Linux / macOS launchers
+├── install.bat                                # One-click build, test & install to User PATH
+├── uninstall.bat                              # One-click uninstaller & cleanup
+├── stirlang.bat                               # Windows CLI launcher
 ├── stirlang.jar                               # Pre-packaged executable JAR
 └── README.md                                  # Complete language documentation
 ```
@@ -136,14 +138,14 @@ Stirlang/
 ## Language Syntax Guide
 
 ### 1. Functions & Entry Points
-A function starts with `Begin Function <Name>(<parameters>)` and ends with `End Function`.
+A function starts with `begin function <Name>(<parameters>)` and ends with `end function`.
 
 You **do not need a `main()` method** to run your program! Calling any function at the top level or running statements directly acts as the program entry point:
 
 ```text
-Begin Function GreetPerson(name)
+begin function GreetPerson(name)
     print("Hello, " + name)
-End Function
+end function
 
 # Access point: Top-level call runs automatically!
 GreetPerson("Danny")
@@ -152,20 +154,20 @@ GreetPerson("Danny")
 If a program contains functions but **no function is called** and **no `main()` function is defined**, the compiler will report:
 ```text
 Stirlang Compiler Error
-Line 1, Column 1: No Access Point. At least one function must be called, or 'Begin Function main()' must be defined.
+Line 1, Column 1: No Access Point. At least one function must be called, or 'begin function main()' must be defined.
 ```
 
-Standard `Begin Function main()` blocks are also fully supported:
+Standard `begin function main()` blocks are also fully supported:
 ```text
-Begin Function calculateArea(width, height)
+begin function calculateArea(width, height)
     area = width * height
     return area
-End Function
+end function
 
-Begin Function main()
+begin function main()
     total = calculateArea(10, 20)
     print("Area: " + total)
-End Function
+end function
 ```
 
 ### 2. Variables & Type Inference
@@ -228,16 +230,16 @@ if age greaterThan 18 and active equalTo true
 end if
 ```
 
-### 6. Loops (`Start Loop`, `End Loop`, `Break Loop`, `Continue Loop`)
+### 6. Loops (`begin loop`, `end loop`, `break loop`, `continue loop`)
 
 Stirlang provides clean and expressive loop constructs:
 
 #### 1. Infinite Loop
 ```text
-Start Loop
-    // Loop forever until a Break Loop is encountered
-    Break Loop
-End Loop
+begin loop
+    // Loop forever until a break loop is encountered
+    break loop
+end loop
 ```
 Compiles to Java:
 ```java
@@ -248,9 +250,9 @@ while (true) {
 
 #### 2. Counted Loop with Exposed Counter
 ```text
-Start Loop(10) as i
+begin loop(10) as i
     print(i)
-End Loop
+end loop
 ```
 Runs 10 times, counting from `0` to `9`. The counter variable `i` is scoped exclusively to the loop body.
 Compiles to Java:
@@ -262,9 +264,9 @@ for (int i = 0; i < 10; i++) {
 
 #### 3. Counted Loop without Counter
 ```text
-Start Loop(5)
+begin loop(5)
     print("Repeating action")
-End Loop
+end loop
 ```
 Runs 5 times. Unique internal counters (`__loop0`, `__loop1`) are generated automatically so nested loops do not collide.
 Compiles to Java:
@@ -274,12 +276,82 @@ for (int __loop0 = 0; __loop0 < 5; __loop0++) {
 }
 ```
 
-#### 4. `Break Loop` and `Continue Loop`
-- `Break Loop` immediately terminates the nearest enclosing loop (`break;`).
-- `Continue Loop` immediately skips to the next iteration of the nearest enclosing loop (`continue;`).
-- Using `Break Loop` or `Continue Loop` outside of a loop causes a compile-time error.
+#### 4. `break loop` and `continue loop`
+- `break loop` immediately terminates the nearest enclosing loop (`break;`).
+- `continue loop` immediately skips to the next iteration of the nearest enclosing loop (`continue;`).
+- Using `break loop` or `continue loop` outside of a loop causes a compile-time error.
 
-### 7. Comments
+### 7. Dynamic Arrays
+
+Stirlang features Python-style dynamic arrays with curly brace syntax `{...}`. Arrays are dynamically sized and homogeneous (all elements within an array must be of the same type).
+
+#### 1. Declaration and Initialization
+```text
+# Initialized array (inferred element type: INT)
+a = {1, 2, 3, 4}
+
+# Empty array (element type is inferred on first element addition)
+empty = {}
+```
+
+#### 2. Homogeneous Type Rules
+All elements in an array must share the same type. Mixing types produces a clear compile-time or runtime error:
+```text
+# Invalid: compiler error
+invalid = {1, "hello", 3}
+```
+
+#### 3. Indexing & Slicing
+Arrays use zero-based indexing and support Python-style negative indexing:
+```text
+a = {10, 20, 30, 40}
+print(a[0])    # Prints 10 (first element)
+print(a[-1])   # Prints 40 (last element)
+print(a[-2])   # Prints 30 (second from last)
+```
+
+Out-of-range positive or negative indices cleanly produce a Stirlang runtime error without exposing Java stack traces:
+```text
+Stirlang Runtime Error: Array index out of range: 5 (size: 4)
+```
+
+#### 4. Element Modification
+Elements can be updated using indexed assignment (including negative indices):
+```text
+a = {1, 2, 3}
+a[0] = 10
+a[-1] = 99
+print(a)   # Prints {10, 2, 99}
+```
+
+#### 5. Array Mutation Methods
+Stirlang provides five built-in mutation methods on array instances:
+
+| Method | Description | Example |
+| :--- | :--- | :--- |
+| `addToEnd(value)` | Appends value to the end of the array | `a.addToEnd(5)` |
+| `addToFront(value)` | Prepends value to index 0 | `a.addToFront(0)` |
+| `add(value, index)` | Inserts value at specified index (supports negative) | `a.add(99, 2)` |
+| `remove(value)` | Removes **all** occurrences of value | `a.remove(2)` |
+| `removeIndex(index)` | Removes element at specified index (supports negative) | `a.removeIndex(0)` |
+
+#### 6. Nested Multidimensional Arrays
+Arrays can be arbitrarily nested. The homogeneous type rule applies recursively:
+```text
+matrix = {{1, 2}, {3, 4}}
+print(matrix[0][1])   # Prints 2
+matrix[1][0] = 42
+print(matrix)         # Prints {{1, 2}, {42, 4}}
+```
+
+#### 7. Clean Output Formatting
+Printing an array with `print(...)` produces clean language-level syntax:
+```text
+a = {1, 2, 3}
+print(a)   # Output: {1, 2, 3}
+```
+
+### 8. Comments
 Both hash (`#`) and double-slash (`//`) line comments are supported:
 
 ```text
@@ -295,28 +367,26 @@ When syntax or semantic errors occur, the compiler prints user-friendly diagnost
 
 ```text
 Stirlang Compiler Error
-Line 9, Column 1: Expected 'end if' before 'End Function'.
+Line 9, Column 1: Expected 'end if' before 'end function'.
 
-    End Function
+    end function
     ^
 ```
 
 ---
 
-## Building and Automatic Installation
+## Installation and Setup
 
-Anyone who clones your repository can build and install Stirlang in one click:
-
-### Windows (One-Click Build & Install)
-Simply double-click **`build.bat`** (or run it in Command Prompt / PowerShell):
+### Windows (One-Click Install)
+Simply double-click **`install.bat`** (or run it in Command Prompt / PowerShell):
 ```cmd
-build.bat
+install.bat
 ```
 This will:
 1. Compile all Java sources
-2. Run all 25 unit tests
+2. Run all 71 unit and integration tests
 3. Package `stirlang.jar`
-4. **Automatically add Stirlang to their Windows User PATH** so they can immediately type `stirlang` or `stirl` from any Command Prompt or Terminal!
+4. **Automatically add Stirlang to your Windows User PATH** so you can immediately run `stirlang` from any Command Prompt or Terminal!
 
 To test the installation:
 ```cmd
@@ -327,39 +397,17 @@ Output:
 Stirlang Compiler version 1.0.0
 ```
 
-### Updating Stirlang to the Latest Version
-Whenever updates are pushed to GitHub, users can update their compiler with one command:
-```cmd
-stirlang -update
-```
-This automatically:
-1. Connects to the GitHub repository
-2. Fetches and pulls the latest source code
-3. Recompiles and runs the test suite
-4. Packages the new `stirlang.jar`
-5. Confirms with `stirlang -v`
-
 ### Windows (One-Click Uninstall)
 Simply double-click **`uninstall.bat`** (or run it in Command Prompt):
 ```cmd
 uninstall.bat
 ```
 This will:
-1. Automatically remove Stirlang from the Windows User `PATH`
+1. Automatically remove Stirlang from your Windows User `PATH`
 2. Clean up compiled `bin/`, `build/`, and `stirlang.jar` files
-3. Keep the original source code clean and intact
+3. Keep your source code clean and intact
 
-*(You can reinstall at any time by running `build.bat` again)*
-
-### Linux & macOS
-```bash
-chmod +x build.sh stirlang stirl update.sh uninstall.sh
-./build.sh
-```
-To run globally on Unix:
-```bash
-sudo ln -s $(pwd)/stirlang /usr/local/bin/stirlang
-```
+*(To reinstall at any time, simply run `install.bat` again)*
 
 ---
 

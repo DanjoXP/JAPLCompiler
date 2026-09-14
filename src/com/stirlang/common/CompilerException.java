@@ -35,9 +35,9 @@ public class CompilerException extends RuntimeException {
      * Formats the compiler error in a clean, developer-friendly manner:
      *
      * Stirlang Compiler Error: Line 6, Column 5
-     * >     End Function
+     * >     end function
      *       ^
-     * Expected 'end if' before 'End Function'.
+     * Expected 'end if' before 'end function'.
      */
     public String getFormattedMessage() {
         StringBuilder sb = new StringBuilder();

@@ -14,7 +14,7 @@ import static com.stirlang.test.StirlangTestRunner.*;
 public class ParserTest {
 
     public void testFunctionDeclaration() {
-        String code = "Begin Function greet(name)\nprint(name)\nEnd Function";
+        String code = "begin function greet(name)\nprint(name)\nend function";
         Lexer lexer = new Lexer(code);
         List<Token> tokens = lexer.tokenize();
         Parser parser = new Parser(tokens, lexer);
@@ -30,7 +30,7 @@ public class ParserTest {
     }
 
     public void testOperatorPrecedence() {
-        String code = "Begin Function main()\nresult = 10 + 5 * 2\nEnd Function";
+        String code = "begin function main()\nresult = 10 + 5 * 2\nend function";
         Lexer lexer = new Lexer(code);
         List<Token> tokens = lexer.tokenize();
         Parser parser = new Parser(tokens, lexer);
@@ -52,13 +52,13 @@ public class ParserTest {
     }
 
     public void testIfElseParsing() {
-        String code = "Begin Function main()\n" +
+        String code = "begin function main()\n" +
                       "if age < 18\n" +
                       "    print(\"Underage\")\n" +
                       "else\n" +
                       "    print(\"Adult\")\n" +
                       "end if\n" +
-                      "End Function";
+                      "end function";
         Lexer lexer = new Lexer(code);
         List<Token> tokens = lexer.tokenize();
         Parser parser = new Parser(tokens, lexer);
@@ -75,23 +75,23 @@ public class ParserTest {
     }
 
     public void testMissingEndFunctionThrowsException() {
-        String code = "Begin Function main()\nage = 30\n";
+        String code = "begin function main()\nage = 30\n";
         Lexer lexer = new Lexer(code);
         List<Token> tokens = lexer.tokenize();
         Parser parser = new Parser(tokens, lexer);
 
         ParserException ex = assertThrows(ParserException.class, () -> {
             parser.parse();
-        }, "Should throw ParserException for missing End Function");
+        }, "Should throw ParserException for missing end function");
 
-        assertTrue(ex.getMessage().contains("Missing 'End Function'"), "Error message should mention Missing 'End Function'");
+        assertTrue(ex.getMessage().contains("Missing 'end function'"), "Error message should mention Missing 'end function'");
     }
 
     public void testMissingEndIfBeforeEndFunction() {
-        String code = "Begin Function main()\n" +
+        String code = "begin function main()\n" +
                       "if age < 18\n" +
                       "    print(\"Hello\")\n" +
-                      "End Function";
+                      "end function";
         Lexer lexer = new Lexer(code);
         List<Token> tokens = lexer.tokenize();
         Parser parser = new Parser(tokens, lexer);
@@ -100,16 +100,16 @@ public class ParserTest {
             parser.parse();
         }, "Should throw ParserException for missing end if");
 
-        assertTrue(ex.getMessage().contains("Expected 'end if' before 'End Function'"),
-                "Message should contain: Expected 'end if' before 'End Function'");
+        assertTrue(ex.getMessage().contains("Expected 'end if' before 'end function'"),
+                "Message should contain: Expected 'end if' before 'end function'");
     }
 
     public void testInfiniteLoopParsing() {
-        String code = "Begin Function main()\n" +
-                      "Start Loop\n" +
+        String code = "begin function main()\n" +
+                      "begin loop\n" +
                       "    print(\"Forever\")\n" +
-                      "End Loop\n" +
-                      "End Function";
+                      "end loop\n" +
+                      "end function";
         Lexer lexer = new Lexer(code);
         List<Token> tokens = lexer.tokenize();
         Parser parser = new Parser(tokens, lexer);
@@ -127,11 +127,11 @@ public class ParserTest {
     }
 
     public void testCountedLoopWithExposedCounter() {
-        String code = "Begin Function main()\n" +
-                      "Start Loop(10) as i\n" +
+        String code = "begin function main()\n" +
+                      "begin loop(10) as i\n" +
                       "    print(i)\n" +
-                      "End Loop\n" +
-                      "End Function";
+                      "end loop\n" +
+                      "end function";
         Lexer lexer = new Lexer(code);
         List<Token> tokens = lexer.tokenize();
         Parser parser = new Parser(tokens, lexer);
@@ -146,11 +146,11 @@ public class ParserTest {
     }
 
     public void testCountedLoopWithoutExposedCounter() {
-        String code = "Begin Function main()\n" +
-                      "Start Loop(5)\n" +
+        String code = "begin function main()\n" +
+                      "begin loop(5)\n" +
                       "    print(\"Hi\")\n" +
-                      "End Loop\n" +
-                      "End Function";
+                      "end loop\n" +
+                      "end function";
         Lexer lexer = new Lexer(code);
         List<Token> tokens = lexer.tokenize();
         Parser parser = new Parser(tokens, lexer);
@@ -164,12 +164,12 @@ public class ParserTest {
     }
 
     public void testBreakAndContinueInLoop() {
-        String code = "Begin Function main()\n" +
-                      "Start Loop\n" +
-                      "    Continue Loop\n" +
-                      "    Break Loop\n" +
-                      "End Loop\n" +
-                      "End Function";
+        String code = "begin function main()\n" +
+                      "begin loop\n" +
+                      "    continue loop\n" +
+                      "    break loop\n" +
+                      "end loop\n" +
+                      "end function";
         Lexer lexer = new Lexer(code);
         List<Token> tokens = lexer.tokenize();
         Parser parser = new Parser(tokens, lexer);
@@ -183,88 +183,179 @@ public class ParserTest {
     }
 
     public void testMisplacedEndLoopThrowsException() {
-        String code = "Begin Function main()\n" +
-                      "End Loop\n" +
-                      "End Function";
+        String code = "begin function main()\n" +
+                      "end loop\n" +
+                      "end function";
         Lexer lexer = new Lexer(code);
         List<Token> tokens = lexer.tokenize();
         Parser parser = new Parser(tokens, lexer);
 
         ParserException ex = assertThrows(ParserException.class, () -> {
             parser.parse();
-        }, "Should throw ParserException for misplaced End Loop");
+        }, "Should throw ParserException for misplaced end loop");
 
-        assertTrue(ex.getMessage().contains("Unexpected 'End Loop' without matching 'Start Loop'"),
-                "Message should complain about unexpected End Loop");
+        assertTrue(ex.getMessage().contains("Unexpected 'end loop' without matching 'begin loop'"),
+                "Message should complain about unexpected end loop");
     }
 
     public void testMissingEndLoopBeforeFunctionEndThrowsException() {
-        String code = "Begin Function main()\n" +
-                      "Start Loop\n" +
-                      "End Function";
+        String code = "begin function main()\n" +
+                      "begin loop\n" +
+                      "end function";
         Lexer lexer = new Lexer(code);
         List<Token> tokens = lexer.tokenize();
         Parser parser = new Parser(tokens, lexer);
 
         ParserException ex = assertThrows(ParserException.class, () -> {
             parser.parse();
-        }, "Should throw ParserException for missing End Loop before End Function");
+        }, "Should throw ParserException for missing end loop before end function");
 
-        assertTrue(ex.getMessage().contains("Expected 'End Loop' before 'End Function'"),
-                "Message should contain: Expected 'End Loop' before 'End Function'");
+        assertTrue(ex.getMessage().contains("Expected 'end loop' before 'end function'"),
+                "Message should contain: Expected 'end loop' before 'end function'");
     }
 
     public void testMissingEndIfBeforeEndLoopThrowsException() {
-        String code = "Begin Function main()\n" +
-                      "Start Loop\n" +
+        String code = "begin function main()\n" +
+                      "begin loop\n" +
                       "if true\n" +
                       "    print(\"Hi\")\n" +
-                      "End Loop\n" +
-                      "End Function";
+                      "end loop\n" +
+                      "end function";
         Lexer lexer = new Lexer(code);
         List<Token> tokens = lexer.tokenize();
         Parser parser = new Parser(tokens, lexer);
 
         ParserException ex = assertThrows(ParserException.class, () -> {
             parser.parse();
-        }, "Should throw ParserException for missing end if before End Loop");
+        }, "Should throw ParserException for missing end if before end loop");
 
-        assertTrue(ex.getMessage().contains("Expected 'end if' before 'End Loop'"),
-                "Message should contain: Expected 'end if' before 'End Loop'");
+        assertTrue(ex.getMessage().contains("Expected 'end if' before 'end loop'"),
+                "Message should contain: Expected 'end if' before 'end loop'");
     }
 
     public void testInfiniteLoopWithAsThrowsException() {
-        String code = "Begin Function main()\n" +
-                      "Start Loop as i\n" +
-                      "End Loop\n" +
-                      "End Function";
+        String code = "begin function main()\n" +
+                      "begin loop as i\n" +
+                      "end loop\n" +
+                      "end function";
         Lexer lexer = new Lexer(code);
         List<Token> tokens = lexer.tokenize();
         Parser parser = new Parser(tokens, lexer);
 
         ParserException ex = assertThrows(ParserException.class, () -> {
             parser.parse();
-        }, "Should throw ParserException for Start Loop as i");
+        }, "Should throw ParserException for begin loop as i");
 
         assertTrue(ex.getMessage().contains("An infinite loop cannot declare a counter variable with 'as'"),
                 "Message should mention infinite loop cannot declare counter variable with as");
     }
 
     public void testBreakWithoutLoopThrowsException() {
-        String code = "Begin Function main()\n" +
-                      "Start Loop\n" +
-                      "    Break\n" +
-                      "End Loop\n" +
-                      "End Function";
+        String code = "begin function main()\n" +
+                      "begin loop\n" +
+                      "    break\n" +
+                      "end loop\n" +
+                      "end function";
         Lexer lexer = new Lexer(code);
         List<Token> tokens = lexer.tokenize();
         Parser parser = new Parser(tokens, lexer);
 
         ParserException ex = assertThrows(ParserException.class, () -> {
             parser.parse();
-        }, "Should throw ParserException for Break without Loop");
+        }, "Should throw ParserException for break without loop");
 
-        assertTrue(ex.getMessage().contains("Expected 'Loop' after 'Break'"),
-                "Message should contain: Expected 'Loop' after 'Break'");
+        assertTrue(ex.getMessage().contains("Expected 'loop' after 'break'"),
+                "Message should contain: Expected 'loop' after 'break'");
+    }
+
+    public void testArrayLiteralParsing() {
+        String code = "begin function main()\n" +
+                      "a = {1, 2, 3}\n" +
+                      "b = {}\n" +
+                      "c = {{1, 2}, {3, 4}}\n" +
+                      "end function";
+        Lexer lexer = new Lexer(code);
+        List<Token> tokens = lexer.tokenize();
+        Parser parser = new Parser(tokens, lexer);
+        ProgramNode program = parser.parse();
+
+        FunctionNode fn = program.getFunctions().get(0);
+        assertEquals(3, fn.getBody().getStatements().size());
+
+        AssignmentStatementNode stmt1 = (AssignmentStatementNode) fn.getBody().getStatements().get(0);
+        assertTrue(stmt1.getValue() instanceof ArrayLiteralNode);
+        ArrayLiteralNode arr1 = (ArrayLiteralNode) stmt1.getValue();
+        assertEquals(3, arr1.getElements().size());
+
+        AssignmentStatementNode stmt2 = (AssignmentStatementNode) fn.getBody().getStatements().get(1);
+        assertTrue(stmt2.getValue() instanceof ArrayLiteralNode);
+        ArrayLiteralNode arr2 = (ArrayLiteralNode) stmt2.getValue();
+        assertEquals(0, arr2.getElements().size());
+
+        AssignmentStatementNode stmt3 = (AssignmentStatementNode) fn.getBody().getStatements().get(2);
+        assertTrue(stmt3.getValue() instanceof ArrayLiteralNode);
+        ArrayLiteralNode arr3 = (ArrayLiteralNode) stmt3.getValue();
+        assertEquals(2, arr3.getElements().size());
+        assertTrue(arr3.getElements().get(0) instanceof ArrayLiteralNode);
+    }
+
+    public void testIndexAccessAndAssignmentParsing() {
+        String code = "begin function main()\n" +
+                      "a = {1, 2}\n" +
+                      "print(a[0])\n" +
+                      "a[0] = 10\n" +
+                      "a[0][1] = 20\n" +
+                      "end function";
+        Lexer lexer = new Lexer(code);
+        List<Token> tokens = lexer.tokenize();
+        Parser parser = new Parser(tokens, lexer);
+        ProgramNode program = parser.parse();
+
+        FunctionNode fn = program.getFunctions().get(0);
+        assertEquals(4, fn.getBody().getStatements().size());
+
+        PrintStatementNode printStmt = (PrintStatementNode) fn.getBody().getStatements().get(1);
+        assertTrue(printStmt.getExpression() instanceof IndexAccessExpressionNode);
+
+        StatementNode assign1 = fn.getBody().getStatements().get(2);
+        assertTrue(assign1 instanceof IndexAssignmentStatementNode);
+        IndexAssignmentStatementNode idxAssign1 = (IndexAssignmentStatementNode) assign1;
+        assertTrue(idxAssign1.getTarget().getTarget() instanceof VariableExpressionNode);
+
+        StatementNode assign2 = fn.getBody().getStatements().get(3);
+        assertTrue(assign2 instanceof IndexAssignmentStatementNode);
+        IndexAssignmentStatementNode idxAssign2 = (IndexAssignmentStatementNode) assign2;
+        assertTrue(idxAssign2.getTarget().getTarget() instanceof IndexAccessExpressionNode);
+    }
+
+    public void testMethodCallParsing() {
+        String code = "begin function main()\n" +
+                      "a = {1, 2}\n" +
+                      "a.addToEnd(3)\n" +
+                      "a.add(10, 0)\n" +
+                      "end function";
+        Lexer lexer = new Lexer(code);
+        List<Token> tokens = lexer.tokenize();
+        Parser parser = new Parser(tokens, lexer);
+        ProgramNode program = parser.parse();
+
+        FunctionNode fn = program.getFunctions().get(0);
+        assertEquals(3, fn.getBody().getStatements().size());
+
+        StatementNode stmt1 = fn.getBody().getStatements().get(1);
+        assertTrue(stmt1 instanceof ExpressionStatementNode);
+        ExpressionStatementNode exprStmt1 = (ExpressionStatementNode) stmt1;
+        assertTrue(exprStmt1.getExpression() instanceof MethodCallExpressionNode);
+        MethodCallExpressionNode call1 = (MethodCallExpressionNode) exprStmt1.getExpression();
+        assertEquals("addToEnd", call1.getMethodName());
+        assertEquals(1, call1.getArguments().size());
+
+        StatementNode stmt2 = fn.getBody().getStatements().get(2);
+        assertTrue(stmt2 instanceof ExpressionStatementNode);
+        ExpressionStatementNode exprStmt2 = (ExpressionStatementNode) stmt2;
+        assertTrue(exprStmt2.getExpression() instanceof MethodCallExpressionNode);
+        MethodCallExpressionNode call2 = (MethodCallExpressionNode) exprStmt2.getExpression();
+        assertEquals("add", call2.getMethodName());
+        assertEquals(2, call2.getArguments().size());
     }
 }

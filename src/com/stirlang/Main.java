@@ -102,7 +102,12 @@ public class Main {
                     break;
                 }
                 case "run": {
+                    long startNanos = System.nanoTime();
                     int exitCode = compiler.run(inputFile, outputDir);
+                    long elapsedNanos = System.nanoTime() - startNanos;
+                    if (exitCode == 0) {
+                        System.out.println(formatExecutionTime(inputFile.getName(), elapsedNanos));
+                    }
                     System.exit(exitCode);
                     break;
                 }
@@ -121,40 +126,59 @@ public class Main {
         }
     }
 
+    public static String formatExecutionTime(String filename, long elapsedNanos) {
+        double elapsedMs = elapsedNanos / 1_000_000.0;
+        if (elapsedMs < 1000.0) {
+            long ms = Math.round(elapsedMs);
+            if (ms < 1000) {
+                return filename + " executed in " + ms + " " + (ms == 1 ? "millisecond" : "milliseconds");
+            }
+        }
+        double seconds = elapsedMs / 1000.0;
+        return filename + " executed in " + String.format(java.util.Locale.US, "%.2f", seconds) + " seconds";
+    }
+
     private static void handleUpdate() {
         try {
             File jarDir = new File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParentFile();
-            boolean isWindows = System.getProperty("os.name", "").toLowerCase().contains("win");
-            ProcessBuilder pb;
-            if (isWindows) {
-                File updateBat = new File(jarDir, "update.bat");
-                String scriptPath = updateBat.exists() ? updateBat.getAbsolutePath() : "update.bat";
-                pb = new ProcessBuilder("cmd.exe", "/c", scriptPath, "--no-pause");
+            File gitDir = new File(jarDir, ".git");
+            if (gitDir.exists()) {
+                System.out.println("Checking for updates via Git...");
+                Process gitProcess = new ProcessBuilder("git", "pull").directory(jarDir).inheritIO().start();
+                int gitExit = gitProcess.waitFor();
+                if (gitExit == 0) {
+                    System.out.println("Running install.bat to rebuild compiler...");
+                    File installBat = new File(jarDir, "install.bat");
+                    if (installBat.exists()) {
+                        Process installProcess = new ProcessBuilder("cmd.exe", "/c", installBat.getAbsolutePath(), "--no-pause").directory(jarDir).inheritIO().start();
+                        System.exit(installProcess.waitFor());
+                    } else {
+                        System.out.println("Update complete. Please run install.bat to rebuild.");
+                        System.exit(0);
+                    }
+                } else {
+                    System.err.println("Git pull failed with exit code " + gitExit);
+                    System.exit(gitExit);
+                }
             } else {
-                File updateSh = new File(jarDir, "update.sh");
-                String scriptPath = updateSh.exists() ? updateSh.getAbsolutePath() : "./update.sh";
-                pb = new ProcessBuilder("bash", scriptPath, "--no-pause");
+                System.out.println("To update Stirlang, download the latest files and run install.bat.");
+                System.exit(0);
             }
-            pb.directory(jarDir);
-            pb.inheritIO();
-            Process p = pb.start();
-            int code = p.waitFor();
-            System.exit(code);
         } catch (Exception e) {
-            System.err.println("Failed to launch updater: " + e.getMessage());
+            System.err.println("Failed to perform update: " + e.getMessage());
             System.exit(1);
         }
     }
 
     private static void printHelp() {
         System.out.println("=========================================================");
-        System.out.println("           Stirlang Programming Language Compiler            ");
+        System.out.println("           Stirlang Programming Language Compiler        ");
         System.out.println("=========================================================");
         System.out.println("Usage:");
-        System.out.println("  Stirlang <file.stirl>                              Compile and run");
-        System.out.println("  Stirlang run <file.stirl>                          Compile and run");
-        System.out.println("  Stirlang compile <file.stirl>                      Compile to .java and .class");
-        System.out.println("  Stirlang java <file.stirl>                         Inspect generated Java source");
+        System.out.println("  stirlang <file.stirl>                              Compile and run");
+        System.out.println("  stirlang run <file.stirl>                          Compile and run");
+        System.out.println("  stirlang compile <file.stirl>                      Compile to .java and .class");
+        System.out.println("  stirlang java <file.stirl>                         Inspect generated Java source");
         System.out.println();
         System.out.println("Options:");
         System.out.println("  -v, --version           Display version information");
@@ -163,9 +187,9 @@ public class Main {
         System.out.println("  -h, --help              Display this help menu");
         System.out.println();
         System.out.println("Examples:");
-        System.out.println("  Stirlang examples/hello.stirl");
-        System.out.println("  Stirlang compile examples/adult_check.stirl -o dist");
-        System.out.println("  Stirlang java examples/math_operations.stirl");
-        System.out.println("  Stirlang -update");
+        System.out.println("  stirlang examples/hello.stirl");
+        System.out.println("  stirlang compile examples/adult_check.stirl -o dist");
+        System.out.println("  stirlang java examples/math_operations.stirl");
+        System.out.println("  stirlang -update");
     }
 }

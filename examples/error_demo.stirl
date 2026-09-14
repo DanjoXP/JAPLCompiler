@@ -1,9 +1,9 @@
 # Demonstrates friendly Stirlang compiler error messages.
-# Notice the missing 'end if' before 'End Function'.
-Begin Function main()
+# Notice the missing 'end if' before 'end function'.
+begin function main()
 
     age = 15
 
     if age < 18
         print("Underage")
-End Function
+end function

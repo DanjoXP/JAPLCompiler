@@ -1,0 +1,76 @@
+// Stirlang Dynamic Arrays Showcase
+
+begin function main()
+    print("=== 1. Basic Arrays and Printing ===")
+    numbers = {10, 20, 30, 40}
+    print("Numbers array:")
+    print(numbers)
+
+    print("")
+    print("=== 2. Indexing (Positive and Negative) ===")
+    print("First element (numbers[0]):")
+    print(numbers[0])
+    print("Last element (numbers[-1]):")
+    print(numbers[-1])
+    print("Second from last (numbers[-2]):")
+    print(numbers[-2])
+
+    print("")
+    print("=== 3. Element Modification ===")
+    numbers[0] = 99
+    numbers[-1] = 100
+    print("After modifying numbers[0] and numbers[-1]:")
+    print(numbers)
+
+    print("")
+    print("=== 4. Array Methods ===")
+    fruits = {"apple", "banana"}
+    print("Initial fruits:")
+    print(fruits)
+
+    fruits.addToEnd("orange")
+    print("After addToEnd(\"orange\"):")
+    print(fruits)
+
+    fruits.addToFront("mango")
+    print("After addToFront(\"mango\"):")
+    print(fruits)
+
+    fruits.add("cherry", 2)
+    print("After add(\"cherry\", 2):")
+    print(fruits)
+
+    fruits.remove("banana")
+    print("After remove(\"banana\"):")
+    print(fruits)
+
+    fruits.removeIndex(0)
+    print("After removeIndex(0):")
+    print(fruits)
+
+    fruits.removeIndex(-1)
+    print("After removeIndex(-1):")
+    print(fruits)
+
+    print("")
+    print("=== 5. Empty Arrays & Type Inference ===")
+    items = {}
+    print("Empty array:")
+    print(items)
+    items.addToEnd(1)
+    items.addToEnd(2)
+    items.addToEnd(3)
+    print("After adding integers to empty array:")
+    print(items)
+
+    print("")
+    print("=== 6. Nested Arrays ===")
+    matrix = {{1, 2}, {3, 4}}
+    print("Matrix:")
+    print(matrix)
+    print("matrix[0][1]:")
+    print(matrix[0][1])
+    matrix[1][0] = 42
+    print("After matrix[1][0] = 42:")
+    print(matrix)
+end function

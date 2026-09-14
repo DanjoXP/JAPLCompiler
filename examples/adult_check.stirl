@@ -1,4 +1,4 @@
-Begin Function main()
+begin function main()
 
     age = 30
 
@@ -12,4 +12,4 @@ Begin Function main()
 
     end if
 
-End Function
+end function

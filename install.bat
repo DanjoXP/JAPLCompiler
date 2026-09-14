@@ -2,41 +2,46 @@
 setlocal enabledelayedexpansion
 
 echo =========================================================
-echo           Building and Installing Stirlang Compiler
+echo           Installing Stirlang Compiler
 echo =========================================================
 
 cd /d "%~dp0"
 
+javac -version >nul 2>&1
+if %ERRORLEVEL% neq 0 (
+    echo [ERROR] 'javac' not found. Please ensure JDK 17 or higher is installed and on PATH.
+    if not "%1"=="--no-pause" pause
+    exit /b 1
+)
+
 if exist bin rd /s /q bin
 mkdir bin
 
-echo Finding source files...
-dir /s /b src\*.java > sources.txt
-
 echo Compiling Java source files...
+dir /s /b src\*.java > sources.txt
 javac -encoding UTF-8 -d bin @sources.txt
-if %ERRORLEVEL% neq 0 (
-    echo.
-    echo [ERROR] Java compilation failed. Make sure JDK 17+ is installed.
-    if exist sources.txt del sources.txt
-    if not "%1"=="--no-pause" pause
-    exit /b %ERRORLEVEL%
-)
+set COMPILE_ERR=%ERRORLEVEL%
 if exist sources.txt del sources.txt
+if %COMPILE_ERR% neq 0 (
+    echo.
+    echo [ERROR] Java compilation failed.
+    if not "%1"=="--no-pause" pause
+    exit /b %COMPILE_ERR%
+)
+echo Java compilation succeeded.
 
 echo.
 echo Running Test Suite...
 java -cp bin com.stirlang.test.StirlangTestRunner
 if %ERRORLEVEL% neq 0 (
     echo.
-    echo [ERROR] Tests failed.
+    echo [ERROR] Test suite failed.
     if not "%1"=="--no-pause" pause
     exit /b %ERRORLEVEL%
 )
 
 echo.
 echo Packaging stirlang.jar...
-
 set JAR_CMD=jar
 where jar >nul 2>&1
 if %ERRORLEVEL% neq 0 (
@@ -52,10 +57,11 @@ if %ERRORLEVEL% neq 0 (
 %JAR_CMD% --create --file stirlang.jar --main-class com.stirlang.Main -C bin .
 if %ERRORLEVEL% neq 0 (
     echo.
-    echo [ERROR] Failed to create JAR file.
+    echo [ERROR] Failed to package stirlang.jar.
     if not "%1"=="--no-pause" pause
     exit /b %ERRORLEVEL%
 )
+echo Successfully packaged stirlang.jar.
 
 echo.
 echo Installing Stirlang to your User PATH...
@@ -63,12 +69,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command "$d = '%~dp0'.TrimEnd('\'
 
 echo.
 echo =========================================================
-echo  [SUCCESS] Stirlang is ready to use!
+echo  [SUCCESS] Stirlang is installed and ready to use.
 echo.
 echo  You can now open any Command Prompt or Terminal and run:
 echo    stirlang -v
-echo    stirlang -update
-echo    stirlang program.stirl
+echo    stirlang your_program.stirl
 echo    stirlang examples\hello.stirl
 echo =========================================================
 echo.
