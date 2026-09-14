@@ -1,0 +1,22 @@
+Begin Function main()
+
+    # Mathematical operations and precedence
+    a = 10
+    b = 5
+    c = 2
+
+    result = a + b * c
+    print("Result of 10 + 5 * 2 = " + result)
+
+    remainder = 17 % 5
+    print("17 % 5 = " + remainder)
+
+    # Compound assignment demonstration
+    score = 100
+    score += 25
+    score -= 5
+    score *= 2
+    score /= 4
+    print("Final score = " + score)
+
+End Function

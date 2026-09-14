@@ -1,0 +1,6 @@
+Begin Function main()
+
+    name = "World"
+    print("Hello " + name)
+
+End Function
